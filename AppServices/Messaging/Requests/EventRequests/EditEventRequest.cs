@@ -6,5 +6,7 @@ public class EditEventRequest
     public Guid ActorUserId { get; set; } // user performing the edit (must be owner)
     public string? Name { get; set; }
     public string? Location { get; set; }
+
+    public DateTime? StartDate { get; set; }
     public string? Notes { get; set; }
 }

@@ -91,7 +91,7 @@ namespace EventManager.AppServices.Implementations
                     return response;
                 }
 
-             
+
 
                 response.StatusCode = BusinessStatusCodeEnum.Success;
                 response.Token = JwtHelper.GenerateJwtToken(user.Id.ToString(), user.Role, _configuration);
@@ -104,7 +104,7 @@ namespace EventManager.AppServices.Implementations
                     Role = user.Role,
                     Id = user.Id,
                     Token = response.Token
-                    
+
                 };
 
             }
@@ -114,7 +114,7 @@ namespace EventManager.AppServices.Implementations
                 response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
             }
 
-           return response;
+            return response;
 
         }
 

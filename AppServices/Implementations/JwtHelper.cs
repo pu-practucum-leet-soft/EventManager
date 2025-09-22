@@ -17,7 +17,7 @@ namespace EventManager.AppServices.Implementations
                 Subject = new ClaimsIdentity(new[]
                 {
             new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Name, userId), 
+            new Claim(ClaimTypes.Name, userId),
             new Claim(ClaimTypes.Role, role)
         }),
                 Expires = DateTime.UtcNow.AddHours(2),
@@ -31,4 +31,4 @@ namespace EventManager.AppServices.Implementations
             return tokenHandler.WriteToken(token);
         }
     }
- }
+}

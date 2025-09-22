@@ -56,7 +56,7 @@ namespace EventManager.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var role = User.FindFirstValue(ClaimTypes.Role);
-           
+
 
             return Ok(new
             {

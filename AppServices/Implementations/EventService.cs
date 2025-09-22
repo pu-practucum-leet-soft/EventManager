@@ -1,9 +1,13 @@
 using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
+using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EventManager.AppServices.Implementations;
 
@@ -12,23 +16,48 @@ public class EventService : IEventService
     private readonly EventManagerDbContext _db;
     public EventService(EventManagerDbContext db) => _db = db;
 
-    public CreateEventResponse CreateEvent(CreateEventRequest req)
+    public CreateEventResponse CreateEvent([FromBody] CreateEventRequest req)
     {
-        var ev = new Event
+        var res = new CreateEventResponse();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // или "sub" при JWT
+
+
+        if (!Guid.TryParse(userId, out var ownerId))
         {
-            Name = req.Name,
-            Location = req.Location,
-            Notes = req.Notes,
-            OwnerUserId = req.OwnerUserId
-        };
-        _db.Events.Add(ev);
-        _db.SaveChanges();
-        // owner auto-joins  evetn 
-        _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = req.OwnerUserId });
-        _db.SaveChanges();
-        return new CreateEventResponse { EventId = ev.Id };
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.Unauthorized;
+            return res;
+        }
+
+        try
+        {
+            var ev = new Event
+            {
+                Name = req.Name,
+                Location = req.Location,
+                Notes = req.Notes,
+                StartDate = req.StartDate,
+                OwnerUserId = ownerId // НЕ го пращай от клиента
+            };
+
+            _db.Events.Add(ev);
+            // owner auto-joins
+            _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = ownerId });
+
+            _db.SaveChanges();
+
+
+
+            return res;
+        }
+        catch (DbUpdateException ex)
+        {
+            await tx.RollbackAsync(ct);
+            _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
+            return StatusCode(500, "Database error while creating event.");
+        }
     }
-    
+
     public EventViewModel GetEvent(GetEventRequest req)
     {
         var ev = _db.Events
@@ -38,13 +67,20 @@ public class EventService : IEventService
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
         var participantIds = ev.Participants.Select(p => p.UserId).ToList();
+        var owner = new UserViewModel
+        {
+            FirstName = ev.OwnerUser.FirstName,
+            LastName = ev.OwnerUser.LastName,
+            Email = ev.OwnerUser.Email,
+        };
+
         return new EventViewModel
         {
             Id = ev.Id,
             Name = ev.Name,
             Location = ev.Location,
             Notes = ev.Notes,
-            OwnerUserId = ev.OwnerUserId,
+            Owner = owner,
             ParticipantUserIds = participantIds
         };
     }
