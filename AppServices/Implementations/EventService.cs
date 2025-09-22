@@ -23,12 +23,12 @@ public class EventService : IEventService
         };
         _db.Events.Add(ev);
         _db.SaveChanges();
-        // owner auto-joins
+        // owner auto-joins  evetn 
         _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = req.OwnerUserId });
         _db.SaveChanges();
         return new CreateEventResponse { EventId = ev.Id };
     }
-
+    
     public EventViewModel GetEvent(GetEventRequest req)
     {
         var ev = _db.Events
