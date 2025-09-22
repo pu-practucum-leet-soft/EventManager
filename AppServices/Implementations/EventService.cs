@@ -37,15 +37,14 @@ public class EventService : IEventService
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
-        var participantIds = ev.Participants.Select(p => p.UserId).ToList();
+        var participantIds = ev.Participants.Select(p => p.UserId.ToString()).ToList();
         return new EventViewModel
         {
-            Id = ev.Id,
             Name = ev.Name,
             Location = ev.Location,
             Notes = ev.Notes,
-            OwnerUserId = ev.OwnerUserId,
-            ParticipantUserIds = participantIds
+            OwnerUserId = "",
+            ParitipantIds = participantIds
         };
     }
 
@@ -91,9 +90,9 @@ public class EventService : IEventService
 
         var list = q.Select(e => new EventSummary
         {
-            Id = e.Id,
             Name = e.Name,
-            Location = e.Location
+            Location = e.Location,
+            DateTime = e.
         }).ToList();
 
         return new GetAllEventsResponse { Events = list };
