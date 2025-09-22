@@ -52,6 +52,7 @@ public class EventService : IEventService
         }
         catch (DbUpdateException ex)
         {
+            /// here is problem
             await tx.RollbackAsync(ct);
             _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
             return StatusCode(500, "Database error while creating event.");
