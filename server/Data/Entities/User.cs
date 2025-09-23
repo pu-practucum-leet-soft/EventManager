@@ -13,5 +13,10 @@ namespace EventManager.Data.Entities
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string? UserImageUrl { get; set; }
+
+        internal static string? FindFirstValue(object nameIdentifier)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

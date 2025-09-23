@@ -15,6 +15,8 @@ public class Event : BaseEntity
     [MaxLength(2000)]
     public string? Notes { get; set; }
 
+    public DateTime? StartDate { get; set; }
+
     [Required]
     public Guid OwnerUserId { get; set; }
     public User? OwnerUser { get; set; }
