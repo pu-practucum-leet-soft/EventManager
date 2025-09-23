@@ -1,11 +1,13 @@
+
+
 namespace EventManager.AppServices.Messaging.Requests.EventRequests;
 
-public class CreateEventRequest
+public class CreateEventRequest : ServiceRequestBase
 {
-    public string Name { get; set; } = default!;
-    public string? Location { get; set; }
-    public string? Notes { get; set; }
+    public EventModel Event { get; set; }
 
-    public DateTime? StartDate { get; set; }
-    public Guid OwnerUserId { get; set; }
+    public CreateEventRequest(EventModel _event)
+    {
+        Event = _event;
+    }
 }

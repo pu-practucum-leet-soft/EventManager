@@ -8,6 +8,8 @@ public class EventViewModel
     public string Name { get; set; } = default!;
     public string? Location { get; set; }
     public string? Notes { get; set; }
+
+    public DateTime? StartDate { get; set; }
     public UserViewModel Owner { get; set; }
     public List<Guid> ParticipantUserIds { get; set; } = new();
 }

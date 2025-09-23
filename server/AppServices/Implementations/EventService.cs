@@ -13,15 +13,20 @@ namespace EventManager.AppServices.Implementations;
 
 public class EventService : IEventService
 {
-    private readonly EventManagerDbContext _db;
-    public EventService(EventManagerDbContext db) => _db = db;
+    private readonly EventManagerDbContext _context;
+    private readonly ILogger<EventService> _logger;
 
-    public CreateEventResponse CreateEvent([FromBody] CreateEventRequest req)
+    public EventService(ILogger<EventService> logger, EventManagerDbContext context)
     {
-        var res = new CreateEventResponse();
+        _logger = logger;
+        _context = context;
+    }
+
+    public async Task<CreateEventResponse> SaveEventAsync([FromBody] CreateEventRequest req)
+    {
+        CreateEventResponse res = new();
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // или "sub" при JWT
-
 
         if (!Guid.TryParse(userId, out var ownerId))
         {
@@ -33,35 +38,43 @@ public class EventService : IEventService
         {
             var ev = new Event
             {
-                Name = req.Name,
-                Location = req.Location,
-                Notes = req.Notes,
-                StartDate = req.StartDate,
+                Name = req.Event.Name,
+                Location = req.Event.Location,
+                Notes = req.Event.Notes,
+                StartDate = req.Event.StartDate,
                 OwnerUserId = ownerId // НЕ го пращай от клиента
             };
 
-            _db.Events.Add(ev);
+            await _context.Events.AddAsync(ev);
+
             // owner auto-joins
-            _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = ownerId });
+            await _context.EventParticipants.AddAsync(
+                new EventParticipant { EventId = ev.Id, UserId = ownerId });
 
-            _db.SaveChanges();
+            await _context.SaveChangesAsync();
 
 
-
-            return res;
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.Success;
         }
         catch (DbUpdateException ex)
         {
-            /// here is problem
-            await tx.RollbackAsync(ct);
             _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
-            return StatusCode(500, "Database error while creating event.");
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
+            return res;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while creating event for owner {OwnerId}", ownerId);
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
+            return res;
+        }
+
+        return res;
     }
 
-    public EventViewModel GetEvent(GetEventRequest req)
+    /* public EventViewModel GetEvent(GetEventRequest req)
     {
-        var ev = _db.Events
+        var ev = _context.Events
             .Include(e => e.Participants)
             .FirstOrDefault(e => e.Id == req.EventId);
 
@@ -84,11 +97,12 @@ public class EventService : IEventService
             Owner = owner,
             ParticipantUserIds = participantIds
         };
-    }
+    }*/
 
-    public EditEventResponse EditEvent(EditEventRequest req)
+
+    /*public EditEventResponse EditEvent(EditEventRequest req)
     {
-        var ev = _db.Events.FirstOrDefault(e => e.Id == req.EventId);
+        var ev = _context.Events.FirstOrDefault(e => e.Id == req.EventId);
         if (ev == null) throw new KeyNotFoundException("Event not found");
         if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can edit");
 
@@ -96,33 +110,37 @@ public class EventService : IEventService
         if (req.Location is not null) ev.Location = req.Location;
         if (req.Notes is not null) ev.Notes = req.Notes;
 
-        _db.SaveChanges();
+        _context.SaveChanges();
         return new EditEventResponse { Success = true };
     }
+    */
 
-    public AddParticipantsResponse AddParticipants(AddParticipantsRequest req)
+
+    /* public AddParticipantsResponse AddParticipants(AddParticipantsRequest req)
+     {
+         var ev = _context.Events.Include(e => e.Participants).FirstOrDefault(e => e.Id == req.EventId);
+         if (ev == null) throw new KeyNotFoundException("Event not found");
+         if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can add participants");
+
+         var existing = ev.Participants.Select(p => p.UserId).ToHashSet();
+         int added = 0;
+         foreach (var uid in req.UserIds)
+         {
+             if (!existing.Contains(uid))
+             {
+                 _context.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = uid });
+                 added++;
+             }
+         }
+         _context.SaveChanges();
+         return new AddParticipantsResponse { Added = added };
+     }
+     */
+
+
+    /*public async Task<GetAllEventsFromOwerResponse> LoadAllEventsAsync(GetAllEventsRequest req)
     {
-        var ev = _db.Events.Include(e => e.Participants).FirstOrDefault(e => e.Id == req.EventId);
-        if (ev == null) throw new KeyNotFoundException("Event not found");
-        if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can add participants");
-
-        var existing = ev.Participants.Select(p => p.UserId).ToHashSet();
-        int added = 0;
-        foreach (var uid in req.UserIds)
-        {
-            if (!existing.Contains(uid))
-            {
-                _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = uid });
-                added++;
-            }
-        }
-        _db.SaveChanges();
-        return new AddParticipantsResponse { Added = added };
-    }
-
-    public GetAllEventsResponse GetAllEvents(GetAllEventsRequest req)
-    {
-        var q = _db.Events.AsQueryable();
+        var q = _context.Events.AsQueryable();
         if (req.OwnerUserId.HasValue)
             q = q.Where(e => e.OwnerUserId == req.OwnerUserId.Value);
 
@@ -134,5 +152,50 @@ public class EventService : IEventService
         }).ToList();
 
         return new GetAllEventsResponse { Events = list };
+    }*/
+
+
+    public async Task<GetEventResponse> LoadEventByIdAsync(GetEventRequest req)
+    {
+
+        var response = new GetEventResponse();
+
+        try
+        {
+            var _event = await _context.Events
+                .AsNoTracking()
+                .Where(e => e.Id == req.EventId)
+                .Select(e => new EventViewModel
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    Location = e.Location,
+                    Notes = e.Notes,
+                    StartDate = e.StartDate,
+                    Owner = new UserViewModel
+                    {
+                        FirstName = e.OwnerUser.FirstName,
+                        LastName = e.OwnerUser.LastName,
+                        Email = e.OwnerUser.Email
+                    }
+                })
+                .FirstOrDefaultAsync();
+
+            if (_event == null)
+            {
+                response.StatusCode = Messaging.BusinessStatusCodeEnum.NotFound;
+                return response;
+            }
+
+            response.Event = _event;
+            response.StatusCode = Messaging.BusinessStatusCodeEnum.Success;
+        }
+        catch (Exception ex)
+        {
+            //_logger.LogError(ex, "Error fetching event {EventId}", req.EventId);
+            response.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
+        }
+
+        return response;
     }
 }
