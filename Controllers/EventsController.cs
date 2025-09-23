@@ -21,7 +21,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public IActionResult Get(Guid id)
+    public IActionResult GetEventById(Guid id)
     {
         var res = _service.GetEvent(new GetEventRequest { EventId = id });
         return Ok(res);

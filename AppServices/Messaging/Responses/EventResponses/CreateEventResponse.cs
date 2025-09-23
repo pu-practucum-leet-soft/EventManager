@@ -1,6 +1,6 @@
 namespace EventManager.AppServices.Messaging.Responses.EventResponses;
 
-public class CreateEventResponse
+public class CreateEventResponse : ServiceResponseBase
 {
-    public Guid EventId { get; set; }
+
 }
