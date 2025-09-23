@@ -24,7 +24,12 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@components/*": ["src/components/*"]
+      "@components/*": ["src/components/*"],
+      "@config": ["src/config"],
+      "@hooks/*": ["src/hooks/*"],
+      "@queries/*": ["src/queries/*"],
+      "@utiils/*": ["src/utils/*"],
+      "@pages/*": ["src/pages/*"]
     }
   },
   "include": ["src"]
