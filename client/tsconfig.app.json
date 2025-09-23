@@ -28,8 +28,9 @@
       "@config": ["src/config"],
       "@hooks/*": ["src/hooks/*"],
       "@queries/*": ["src/queries/*"],
-      "@utiils/*": ["src/utils/*"],
-      "@pages/*": ["src/pages/*"]
+      "@utils/*": ["src/utils/*"],
+      "@pages/*": ["src/pages/*"],
+      "@redux/*": ["src/redux/*"]
     }
   },
   "include": ["src"]
