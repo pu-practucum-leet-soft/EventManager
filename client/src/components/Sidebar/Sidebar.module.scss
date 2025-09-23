@@ -1,0 +1,10 @@
+.Sidebar {
+  position: sticky;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+  width: 80px;
+  padding: 20px 0;
+  background-color: #f4f4f4;
+}
