@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using EventManager.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Controllers
