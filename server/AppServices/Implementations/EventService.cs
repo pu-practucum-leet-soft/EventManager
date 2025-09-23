@@ -20,7 +20,7 @@ public class EventService : IEventService
     {
         var res = new CreateEventResponse();
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // или "sub" при JWT
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // пїЅпїЅпїЅ "sub" пїЅпїЅпїЅ JWT
 
 
         if (!Guid.TryParse(userId, out var ownerId))
@@ -37,7 +37,7 @@ public class EventService : IEventService
                 Location = req.Location,
                 Notes = req.Notes,
                 StartDate = req.StartDate,
-                OwnerUserId = ownerId // НЕ го пращай от клиента
+                OwnerUserId = ownerId // пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             };
 
             _db.Events.Add(ev);
@@ -53,9 +53,10 @@ public class EventService : IEventService
         catch (DbUpdateException ex)
         {
             /// here is problem
-            await tx.RollbackAsync(ct);
-            _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
-            return StatusCode(500, "Database error while creating event.");
+            //await tx.RollbackAsync(ct);
+            //_logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
+            //return StatusCode(500, "Database error while creating event.");
+            return res;
         }
     }
 
