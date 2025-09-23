@@ -7,6 +7,7 @@ using EventManager.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace EventManager.AppServices.Implementations;
@@ -16,11 +17,11 @@ public class EventService : IEventService
     private readonly EventManagerDbContext _db;
     public EventService(EventManagerDbContext db) => _db = db;
 
-    public CreateEventResponse CreateEvent([FromBody] CreateEventRequest req)
+    public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req)
     {
         var res = new CreateEventResponse();
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // ��� "sub" ��� JWT
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 
         if (!Guid.TryParse(userId, out var ownerId))
@@ -37,7 +38,7 @@ public class EventService : IEventService
                 Location = req.Location,
                 Notes = req.Notes,
                 StartDate = req.StartDate,
-                OwnerUserId = ownerId // �� �� ������ �� �������
+                OwnerUserId = ownerId
             };
 
             _db.Events.Add(ev);
@@ -54,13 +55,13 @@ public class EventService : IEventService
         {
             /// here is problem
             //await tx.RollbackAsync(ct);
-            //_logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
-            //return StatusCode(500, "Database error while creating event.");
-            return res;
+            //ILogger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
+            //return StatusCodes(500, "Database error while creating event.");
+            return new CreateEventResponse();
         }
     }
 
-    public EventViewModel GetEvent(GetEventRequest req)
+    public async Task<EventViewModel> GetEvent(GetEventRequest req)
     {
         var ev = _db.Events
             .Include(e => e.Participants)
@@ -87,7 +88,7 @@ public class EventService : IEventService
         };
     }
 
-    public EditEventResponse EditEvent(EditEventRequest req)
+    public async Task<EditEventResponse> EditEvent(EditEventRequest req)
     {
         var ev = _db.Events.FirstOrDefault(e => e.Id == req.EventId);
         if (ev == null) throw new KeyNotFoundException("Event not found");
@@ -101,7 +102,7 @@ public class EventService : IEventService
         return new EditEventResponse { Success = true };
     }
 
-    public AddParticipantsResponse AddParticipants(AddParticipantsRequest req)
+    public async Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req)
     {
         var ev = _db.Events.Include(e => e.Participants).FirstOrDefault(e => e.Id == req.EventId);
         if (ev == null) throw new KeyNotFoundException("Event not found");
@@ -121,19 +122,33 @@ public class EventService : IEventService
         return new AddParticipantsResponse { Added = added };
     }
 
-    public GetAllEventsResponse GetAllEvents(GetAllEventsRequest req)
+    public async Task<GetAllEventsResponse> GetAllEvents()
     {
-        var q = _db.Events.AsQueryable();
-        if (req.OwnerUserId.HasValue)
-            q = q.Where(e => e.OwnerUserId == req.OwnerUserId.Value);
+        // Get the user's Id from Claims and parse it to a Guid
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
 
-        var list = q.Select(e => new EventSummary
-        {
-            Id = e.Id,
-            Name = e.Name,
-            Location = e.Location
-        }).ToList();
+        //var q = _db.Events.Where(e => e.OwnerUserId == ownerId);
 
-        return new GetAllEventsResponse { Events = list };
+        //var list = q.Select(e => new EventSummary
+        //{
+        //    Id = e.Id,
+        //    Name = e.Name,
+        //    Location = e.Location
+        //}).ToList();
+
+        var res = new List<EventSummary>();
+
+        var response = new GetAllEventsResponse();
+        response.Events = res;
+
+        res.Add(new EventSummary { Name = "eventData1", Location = "Sofia", Notes = "asd", ParticipantsCount = new List<string> { "1", "2", "3", "5", "12" }.Count });
+        res.Add(new EventSummary { Name = "eventData2", Location = "Sofia", Notes = "afsda", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
+        res.Add(new EventSummary { Name = "eventData3", Location = "Plovdiv", Notes = "asdgwefw", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
+        res.Add(new EventSummary { Name = "eventData4", Location = "Plovdiv", Notes = "asdwd", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
+        res.Add(new EventSummary { Name = "eventData5", Location = "Varna", Notes = "asdfsadg", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2" }.Count });
+        res.Add(new EventSummary { Name = "eventData6", Location = "Varna", Notes = "asdgs", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
+        res.Add(new EventSummary { Name = "eventData7", Location = "Plovdiv", Notes = "swef", ParticipantsCount = new List<string> { "1", "2", "3" }.Count });
+
+        return response;
     }
 }

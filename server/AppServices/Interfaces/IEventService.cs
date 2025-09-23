@@ -5,9 +5,9 @@ using EventManager.AppServices.Messaging.Responses.EventResponses;
 
 public interface IEventService
 {
-    CreateEventResponse CreateEvent(CreateEventRequest req);
-    EventViewModel GetEvent(GetEventRequest req);
-    EditEventResponse EditEvent(EditEventRequest req);
-    AddParticipantsResponse AddParticipants(AddParticipantsRequest req);
-    GetAllEventsResponse GetAllEvents(GetAllEventsRequest req);
+    Task<CreateEventResponse> CreateEvent(CreateEventRequest req);
+    Task<EventViewModel> GetEvent(GetEventRequest req);
+    Task<EditEventResponse> EditEvent(EditEventRequest req);
+    Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req);
+    Task<GetAllEventsResponse> GetAllEvents();
 }
