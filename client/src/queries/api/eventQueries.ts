@@ -4,7 +4,8 @@ const BASE_URL = `/events`;
 
 const eventQueries = {
   getAll: async () => {
-    return await axios.get(`${BASE_URL}`);
+    // TODO: adjust endpoint as needed
+    return await axios.get(`${BASE_URL}/get-all`);
   },
 };
 
