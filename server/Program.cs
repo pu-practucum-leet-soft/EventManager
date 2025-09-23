@@ -1,5 +1,9 @@
 using EventManager.AppServices.Implementations;
 using EventManager.AppServices.Interfaces;
+using EventManager.Data.Contexts;
+using EventManager.Data.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManager
 {
@@ -8,6 +12,20 @@ namespace EventManager
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            var connectionString = builder.Configuration.GetConnectionString("EventManagerDbSettings");
+
+            builder.Services.AddDbContext<EventManagerDbContext>(x =>
+                x.UseSqlServer(connectionString));
+
+            builder.Services.AddIdentity<User, IdentityRole<Guid>> (options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+    .AddEntityFrameworkStores<EventManagerDbContext>()
+    .AddDefaultTokenProviders();
 
             builder.Services.AddControllers();
 

@@ -1,22 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EventManager.Data.Entities
 {
-    public class User : BaseEntity
+    public class User : IdentityUser<Guid>
     {
-        [Required]
-        public string FirstName { get; set; }
-        [Required]
-        public string LastName { get; set; }
-        public string Role { get; set; } // user или admin
-        [Required]
-        public string Email { get; set; }
-        public string PasswordHash { get; set; }
+        [Column("UserImage")]
         public string? UserImageUrl { get; set; }
-
-        internal static string? FindFirstValue(object nameIdentifier)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

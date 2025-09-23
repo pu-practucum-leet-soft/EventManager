@@ -1,15 +1,17 @@
 ﻿
-using Microsoft.EntityFrameworkCore;
 using EventManager.Data.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.Contexts
 {
 
-    public class EventManagerDbContext : DbContext 
+    public class EventManagerDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
-        public DbSet<User> Users { get; set; } = default!;
-        public DbSet<Event> Events { get; set; } = default!;
-        public DbSet<EventParticipant> EventParticipants { get; set; } = default!;
+        public DbSet<Event> Events { get; set; }
+
+        public DbSet<EventParticipant> EventParticipants { get; set; }
 
         public EventManagerDbContext(DbContextOptions<EventManagerDbContext> options) : base(options)
         {
