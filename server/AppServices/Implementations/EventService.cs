@@ -38,7 +38,7 @@ public class EventService : IEventService
                 Location = req.Location,
                 Notes = req.Notes,
                 StartDate = req.StartDate,
-                OwnerUserId = ownerId 
+                OwnerUserId = ownerId
             };
 
             _db.Events.Add(ev);
