@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router";
 import Layout from "./components/Layout";
-import Home from "./pages/Home/Home";
-import Events from "./pages/Events/Events";
+import Home from "./pages/Home";
+import Events from "./pages/Events";
 
 function App() {
   return (

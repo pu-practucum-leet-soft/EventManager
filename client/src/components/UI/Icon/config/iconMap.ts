@@ -11,6 +11,7 @@ import UserPlus from "../icons/UserPlus";
 import VolumeHigh from "../icons/VolumeHigh";
 import XMark from "../icons/XMark";
 import Home from "../icons/Home";
+import Calendar from "../icons/Calendar";
 
 const iconMap = {
   "arrow-down": ChevronDown,
@@ -26,6 +27,7 @@ const iconMap = {
   "x-mark": XMark,
   "right-from-bracket": RightFromBracket,
   home: Home,
+  calendar: Calendar,
 };
 
 export default iconMap;
