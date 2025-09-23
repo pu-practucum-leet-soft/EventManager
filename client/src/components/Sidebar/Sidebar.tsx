@@ -5,7 +5,8 @@ const Sidebar = () => {
   return (
     <aside className={styles.Sidebar}>
       <SidebarElement to="/" icon="home" label="Home" />
-      <SidebarElement to="/events" icon="gear" label="Events" />
+      <SidebarElement to="/events" icon="calendar" label="Events" />
+      <SidebarElement to="/invites" icon="user-plus" label="Invites" />
     </aside>
   );
 };

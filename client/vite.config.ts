@@ -8,6 +8,11 @@ export default defineConfig({
     alias: {
       "@styles": "/src/styles",
       "@components": "/src/components",
+      "@config": "/src/config",
+      "@queries": "/src/queries",
+      "@hooks": "/src/hooks",
+      "@utils": "/src/utils",
+      "@pages": "/src/pages",
     },
   },
 });

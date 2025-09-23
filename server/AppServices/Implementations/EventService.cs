@@ -53,10 +53,13 @@ public class EventService : IEventService
         }
         catch (DbUpdateException ex)
         {
-            //await tx.RollbackAsync(ct);
-            //ILogger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
-            //return StatusCodes(500, "Database error while creating event.");
-            return new CreateEventResponse();
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
+            /// here is problem
+            // await tx.RollbackAsync(ct);
+            // _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
+            // return StatusCode(500, "Database error while creating event.");
+
+            return res;
         }
     }
 
