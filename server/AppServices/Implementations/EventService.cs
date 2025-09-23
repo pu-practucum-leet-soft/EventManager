@@ -15,7 +15,7 @@ namespace EventManager.AppServices.Implementations;
 public class EventService : IEventService
 {
     private readonly EventManagerDbContext _db;
-    public EventService(EventManagerDbContext db) => _db = db;
+    // public EventService(EventManagerDbContext db) => _db = db;
 
     public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req)
     {
@@ -127,7 +127,7 @@ public class EventService : IEventService
     public async Task<GetAllEventsResponse> GetAllEvents()
     {
         // Get the user's Id from Claims and parse it to a Guid
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
+        // Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
 
         //var q = _db.Events.Where(e => e.OwnerUserId == ownerId);
 

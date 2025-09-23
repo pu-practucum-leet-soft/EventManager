@@ -1,3 +1,6 @@
+using EventManager.AppServices.Implementations;
+using EventManager.AppServices.Interfaces;
+
 namespace EventManager
 {
     public class Program
@@ -7,6 +10,8 @@ namespace EventManager
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
+
+            builder.Services.AddScoped<IEventService, EventService>();
             
             builder.Services.AddEndpointsApiExplorer();
             
