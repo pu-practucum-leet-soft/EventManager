@@ -1,0 +1,81 @@
+.Events {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 100px;
+
+  background-color: #76c40d; /* Sea Green */
+
+  .EventsContainer {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 10px;
+    width: 100%;
+
+    .FilterBar {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      width: 100%;
+      border-radius: 8px;
+
+      .FilterField {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .SearchField {
+        max-width: 500px;
+        flex-grow: 1;
+      }
+
+      .FilterButton {
+        height: 100%;
+        padding: 10px 20px;
+        font-size: 14px;
+        margin-left: auto;
+      }
+    }
+
+    .EventList {
+      width: 100%;
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .Actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+
+      .Pagination {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        .PageButton {
+          padding: 10px 20px;
+          font-size: 14px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+      }
+      .AddEventButton {
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+    }
+  }
+}

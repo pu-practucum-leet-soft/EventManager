@@ -1,0 +1,43 @@
+.Home {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 100px;
+
+  background-color: #2e8b57; /* Sea Green */
+
+  .Content {
+    flex-grow: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+
+    .RecentEvents {
+      width: 100%;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .Subsections {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 20px;
+
+      .Invites,
+      .UpcomingEvents {
+        flex: 1;
+        height: 1fr;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}

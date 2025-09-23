@@ -12,6 +12,7 @@ import VolumeHigh from "../icons/VolumeHigh";
 import XMark from "../icons/XMark";
 import Home from "../icons/Home";
 import Calendar from "../icons/Calendar";
+import Chart from "../icons/Chart";
 
 const iconMap = {
   "arrow-down": ChevronDown,
@@ -28,6 +29,7 @@ const iconMap = {
   "right-from-bracket": RightFromBracket,
   home: Home,
   calendar: Calendar,
+  chart: Chart,
 };
 
 export default iconMap;
