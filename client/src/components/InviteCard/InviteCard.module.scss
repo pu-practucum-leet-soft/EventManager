@@ -1,0 +1,46 @@
+@use "sass:color";
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.InviteCard {
+  @include element-card;
+
+  .EventTitle {
+    flex-grow: 1;
+  }
+
+  span {
+    padding: 0.5em;
+  }
+
+  .Actions {
+    display: flex;
+    gap: 0.5em;
+
+    .AcceptButton,
+    .DeclineButton {
+      padding: 0.3em 0.6em;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: $font-sm;
+      color: #fff;
+      transition: background-color 0.3s;
+    }
+
+    .AcceptButton {
+      background-color: $color-success;
+
+      &:hover {
+        background-color: color.adjust($color-success, $lightness: -10%);
+      }
+    }
+    .DeclineButton {
+      background-color: $color-danger;
+
+      &:hover {
+        background-color: color.adjust($color-danger, $lightness: -10%);
+      }
+    }
+  }
+}

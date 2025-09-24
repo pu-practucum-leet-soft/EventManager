@@ -1,12 +1,10 @@
-.Home {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 20px 100px;
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
 
-  background-color: #2e8b57; /* Sea Green */
+.Home {
+  @include page-container;
+
+  background-color: $color-background-2;
 
   .Content {
     flex-grow: 1;
@@ -17,10 +15,7 @@
 
     .RecentEvents {
       width: 100%;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background-color: $color-background-1;
     }
 
     .Subsections {
@@ -32,11 +27,7 @@
       .Invites,
       .UpcomingEvents {
         flex: 1;
-        height: 1fr;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: $color-background-1;
       }
     }
   }

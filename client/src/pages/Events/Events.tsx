@@ -1,66 +1,100 @@
-import eventQueries, { eventCacheTags } from "@queries/api/eventQueries";
-import styles from "./Events.module.scss";
-import { useQuery } from "@tanstack/react-query";
 import classNames from "classnames";
 
+import EventsList from "@components/EventsList";
+import Section from "@components/UI/Section";
+
+import { events } from "@pages/dummyData";
+
+import styles from "./Events.module.scss";
+import Button from "@components/UI/Button";
+import Icon from "@components/UI/Icon";
+
 const EventsPage = () => {
-  const { data, isSuccess, isLoading } = useQuery({
-    queryKey: [eventCacheTags.index],
-    queryFn: async () => {
-      console.log("Fetching event data...");
-      const res = await eventQueries.getAll();
-      return res.data;
-    },
-  });
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isSuccess) {
-    console.log(data);
-  }
-
   // TODO: Example rendering of events, adjust as needed when actual data structure is known
   return (
     <div className={styles.Events}>
       <h1>Events</h1>
       <div className={styles.EventsContainer}>
         <div className={styles.FilterBar}>
-          <input
-            className={classNames(styles.FilterField, styles.SearchField)}
-            type="text"
-            placeholder="Search events..."
-          />
-          <select className={styles.FilterField} name="location" id="">
-            <option value="">Select Location</option>
-            <option value="location1">Location 1</option>
-            <option value="location2">Location 2</option>
-          </select>
-          <input
-            className={styles.FilterField}
-            type="date"
-            placeholder="Select Date"
-          />
-          <button className={styles.FilterButton}>Filter</button>
+          <div className={styles.FilterFieldGroup}>
+            <label htmlFor="search">Event Name</label>
+            <input
+              id="search"
+              name="search"
+              className={classNames(styles.FilterField, styles.SearchField)}
+              type="text"
+              placeholder="Search events..."
+            />
+          </div>
+          <div className={styles.FilterFieldGroup}>
+            <label htmlFor="location">Location</label>
+            <select
+              className={styles.FilterField}
+              name="location"
+              id="location"
+            >
+              <option value="">Select Location</option>
+              <option value="location1">Location 1</option>
+              <option value="location2">Location 2</option>
+            </select>
+          </div>
+          <div className={styles.FilterFieldGroup}>
+            <label htmlFor="startDate">Start Date</label>
+            <input
+              id="startDate"
+              name="startDate"
+              className={styles.FilterField}
+              type="date"
+              placeholder="Select Start Date"
+            />
+          </div>
+          <div className={styles.FilterFieldGroup}>
+            <label htmlFor="endDate">End Date</label>
+            <input
+              id="endDate"
+              name="endDate"
+              className={styles.FilterField}
+              type="date"
+              placeholder="Select End Date"
+            />
+          </div>
+          <Button
+            inline
+            variant="primary"
+            color="primary"
+            border="rounded"
+            className={styles.FilterButton}
+          >
+            Filter
+          </Button>
         </div>
-        {isSuccess && data ? (
-          <ul className={styles.EventList}>
-            {data.events.map((event, index) => (
-              <li key={`event-${index}`}>{event.name}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>No events available.</p>
-        )}
+        <Section className={styles.EventList}>
+          <EventsList events={events} noEventsMessage="No events found." />
+        </Section>
         <div className={styles.Actions}>
           <div className={styles.Pagination}>
-            <button className={styles.PageButton}>Previous</button>
-            <span className={styles.PageInfo}>Page 1 of 10</span>
-            <button className={styles.PageButton}>Next</button>
+            <Button
+              variant="text"
+              color="primary"
+              border="rounded"
+              className={styles.ButtonLeft}
+            >
+              <Icon className={styles.PageIconLeft} name="arrow-left" />
+            </Button>
+            <span className={styles.PageInfo}>1</span>
+            <Button
+              variant="text"
+              color="primary"
+              border="block"
+              className={styles.ButtonRight}
+            >
+              <Icon className={styles.PageIconRight} name="arrow-right" />
+            </Button>
           </div>
           <div className={styles.AddEvent}>
-            <button className={styles.AddEventButton}>Add New Event</button>
+            <Button variant="primary" color="primary" border="rounded">
+              Add Event
+            </Button>
           </div>
         </div>
       </div>

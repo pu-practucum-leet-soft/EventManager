@@ -1,0 +1,21 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.EventCard {
+  @include element-card;
+
+  a {
+    display: flex;
+    flex-direction: row;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.5em;
+  }
+  span {
+    padding: 0.5em;
+  }
+
+  .Title {
+    flex-grow: 1;
+  }
+}

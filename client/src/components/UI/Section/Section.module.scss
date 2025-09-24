@@ -1,0 +1,11 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Section {
+  @include section-card;
+  background-color: $color-background-1;
+
+  .Content {
+    padding: 10px 0;
+  }
+}

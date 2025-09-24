@@ -8,10 +8,13 @@ $element-size: 36px;
   justify-content: center;
   padding: 10px;
   border-radius: 100%;
+  background-color: $color-background-2;
+  transition: background-color 0.2s, color 0.2s;
 
   .Label {
+    display: none;
     position: absolute;
-    left: 100%;
+    left: 95%;
     white-space: nowrap;
     background-color: #333;
     color: #fff;
@@ -28,10 +31,14 @@ $element-size: 36px;
   }
 
   &:hover {
-    background-color: #e0e0e0;
+    // display: inline-block;
+    background-color: $color-background-3;
     color: #000;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
 
     .Label {
+      display: block;
       opacity: 1;
     }
   }

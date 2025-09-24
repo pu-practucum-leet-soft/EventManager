@@ -1,14 +1,15 @@
+import Section from "@components/UI/Section";
 import styles from "./Invites.module.scss";
+import InvitesList from "@components/InvitesList";
+import { invites } from "@pages/dummyData";
 
 const InvitesPage = () => {
   return (
     <div className={styles.Invites}>
       <h1>Invites</h1>
-      <ul className={styles.InviteList}>
-        <li>Invite 1</li>
-        <li>Invite 2</li>
-        <li>Invite 3</li>
-      </ul>
+      <Section className={styles.InviteList}>
+        <InvitesList invites={invites} />
+      </Section>
     </div>
   );
 };
