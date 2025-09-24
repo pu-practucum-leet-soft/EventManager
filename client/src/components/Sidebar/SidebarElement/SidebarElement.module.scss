@@ -30,6 +30,19 @@ $element-size: 36px;
     height: $element-size;
   }
 
+  &.Active {
+    background-color: $color-background-3;
+    fill: $color-primary;
+    color: #fff;
+
+    transition: background-color 0.2s, color 0.2s, fill 0.2s;
+
+    &:hover {
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s, fill 0.2s;
+    }
+  }
+
   &:hover {
     // display: inline-block;
     background-color: $color-background-3;
