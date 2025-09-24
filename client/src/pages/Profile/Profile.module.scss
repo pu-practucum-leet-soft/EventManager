@@ -1,0 +1,8 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Profile {
+  @include page-container;
+
+  background-color: $color-background-2;
+}

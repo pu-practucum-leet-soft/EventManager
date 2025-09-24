@@ -1,0 +1,20 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Stats {
+  display: flex;
+  flex-direction: column;
+  @include page-container;
+
+  background-color: $color-background-2;
+
+  .StatsSection {
+    flex-grow: 1;
+    .StatsContent {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: $color-background-1;
+    }
+  }
+}
