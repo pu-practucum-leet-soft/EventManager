@@ -2,6 +2,7 @@ namespace EventManager.AppServices.Interfaces;
 
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
+using EventManager.Controllers;
 
 public interface IEventService
 {
@@ -10,4 +11,5 @@ public interface IEventService
     Task<EditEventResponse> EditEvent(EditEventRequest req);
     Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req, string inviterId);
     Task<GetAllEventsResponse> GetAllEvents();
+    Task<StatisticViewModel> GetEventStatistic(Guid ownerId);
 }

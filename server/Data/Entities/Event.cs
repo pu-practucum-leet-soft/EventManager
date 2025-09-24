@@ -21,7 +21,7 @@ public class Event
     [Column("EventDescription")]
     public string? Description { get; set; }
 
-    [Column("EventName")]
+    [Column("EventStartDate")]
     public DateTime? StartDate { get; set; }
 
     [MaxLength(50)]

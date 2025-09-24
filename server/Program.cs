@@ -5,6 +5,7 @@ using EventManager.Data.Entities;
 using EventManager.Data.Seeder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 namespace EventManager
 {
@@ -29,6 +30,28 @@ namespace EventManager
             .AddDefaultTokenProviders();
 
             builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "EventManager API",
+                    Description = "An ASP.NET Core Web API for managing events.",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Contact",
+                        Url = new Uri("https://example.com/contact")
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "License",
+                        Url = new Uri("https://example.com/license")
+                    }
+                });
+            });
 
             builder.Services.AddScoped<IEventService, EventService>();
 
@@ -53,6 +76,8 @@ namespace EventManager
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
             else
             {
@@ -63,15 +88,17 @@ namespace EventManager
 
 
             app.UseCors(ClientAppPolicy);
-
+            
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseSwagger();
 
             app.MapControllers();
 
             using (var scope = app.Services.CreateScope())
             {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
                 await RoleDataSeeder.SeedRolesAsync(roleManager);
             }
 

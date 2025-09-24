@@ -4,11 +4,9 @@ using EventManager.AppServices.Messaging.Responses.EventResponses;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
-using Microsoft.AspNetCore.Authorization;
+using EventManager.Data.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 
 namespace EventManager.AppServices.Implementations;
 
@@ -143,7 +141,7 @@ public class EventService : IEventService
     public async Task<GetAllEventsResponse> GetAllEvents()
     {
         var response = new GetAllEventsResponse();
-        
+
         var q = await _db.Events.AsNoTracking().ToListAsync();
 
         var allEventsList = q.Select(e => new EventSummary
@@ -169,5 +167,43 @@ public class EventService : IEventService
         //res.Add(new EventSummary { Name = "eventData7", Location = "Plovdiv", Description = "swef", ParticipantsCount = new List<string> { "1", "2", "3" }.Count });
 
         return response;
+    }
+
+    //Общ брой събития, създадени от потребителя.
+    //Процент участници, потвърдили участие("Потвърден") спрямо всички поканени.
+    public async Task<StatisticViewModel> GetEventStatistic(Guid ownerId)
+    {
+        var ownerEvents = await _db.Events
+            .AsNoTracking()
+            .Where(x => x.OwnerUserId == ownerId)
+            .ToListAsync();
+
+        var res = new StatisticViewModel();
+        // Total count of events created by the uuser.
+        res.OwnerEventsCount = ownerEvents.Count();
+
+        foreach ( var @event in ownerEvents)
+        {
+            // Calculate percentage of "Accepted" invites against all "Invited".
+            var eventParticipants = @event.Participants.ToList();
+
+            var participantsWithAcceptedInvites = eventParticipants
+                .Where(x => x.Status == InviteStatus.Accepted)
+                .Count();
+
+            var particpantsWithInvites = eventParticipants.Count();
+
+            var currentEventStastic = participantsWithAcceptedInvites / particpantsWithInvites;
+
+            res.EventStatistics.Add(new EventStatistic
+            { 
+                EventId = @event.Id,
+                AcceptedInvitesCount = participantsWithAcceptedInvites,
+                TotalInvitedCount = particpantsWithInvites,
+                CalculatedStatsticResult = currentEventStastic
+            });
+        }
+
+        return res;
     }
 }

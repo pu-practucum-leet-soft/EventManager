@@ -54,9 +54,8 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Edit(Guid id, [FromBody] EditEventRequest req)
+    public async Task<IActionResult> Edit([FromBody] EditEventRequest req)
     {
-        req.EventId = id;
         var res = await _service.EditEvent(req);
         return Ok(res);
     }
@@ -90,5 +89,21 @@ public class EventsController : ControllerBase
         var res = await _service.GetAllEvents();
         return Ok(res);
     }
+
+    /// <summary>
+    /// Get all events.
+    /// </summary>
+    [HttpGet("statistic")]
+    [ProducesResponseType(typeof(IEnumerable<StatisticViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetStatistic()
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var res = await _service.GetEventStatistic(userId);
+        return Ok(res);
+    }
 }
+
+
 
