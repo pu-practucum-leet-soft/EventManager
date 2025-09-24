@@ -5,6 +5,7 @@ using EventManager.AppServices.Messaging.Responses.EventResponses;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EventManager.Controllers;
 
@@ -25,7 +26,8 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateEventRequest req)
     {
-        var res = await _service.CreateEvent(req);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var res = await _service.CreateEvent(req, userId);
         return Ok(res);
     }
 
@@ -70,7 +72,8 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> AddParticipants(Guid id, [FromBody] AddParticipantsRequest req)
     {
         req.EventId = id;
-        var res = await _service.AddParticipants(req);
+        var inviterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var res = await _service.AddParticipants(req, inviterId);
         return Ok(res);
     }
 
@@ -83,6 +86,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll()
     {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var res = await _service.GetAllEvents();
         return Ok(res);
     }

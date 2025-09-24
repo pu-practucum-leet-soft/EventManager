@@ -5,10 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-[PrimaryKey(nameof(EventId), nameof(Invitee))]
 public class EventParticipant
 {
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Key]
     public Guid Id { get; set; }
 
     [Required]
