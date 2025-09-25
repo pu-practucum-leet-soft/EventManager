@@ -94,6 +94,7 @@ public class EventsController : ControllerBase
     /// Get all events.
     /// </summary>
     [HttpGet("statistic")]
+    [Authorize]
     [ProducesResponseType(typeof(IEnumerable<StatisticViewModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
