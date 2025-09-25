@@ -33,15 +33,13 @@ namespace EventManager.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    EventTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Location = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Visibility = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Public = table.Column<bool>(type: "bit", nullable: false),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    eventStatus = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,12 +57,14 @@ namespace EventManager.Migrations
                 columns: table => new
                 {
                     EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Inviter = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    InviteeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    InviterId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    inviteStatus = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventParticipants", x => new { x.EventId, x.UserId });
+                    table.PrimaryKey("PK_EventParticipants", x => new { x.EventId, x.InviteeId });
                     table.ForeignKey(
                         name: "FK_EventParticipants_Events_EventId",
                         column: x => x.EventId,
@@ -72,22 +72,28 @@ namespace EventManager.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventParticipants_Users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_EventParticipants_Users_InviteeId",
+                        column: x => x.InviteeId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EventParticipants_Users_InviterId",
+                        column: x => x.InviterId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventParticipants_Inviter",
+                name: "IX_EventParticipants_InviteeId",
                 table: "EventParticipants",
-                column: "Inviter");
+                column: "InviteeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventParticipants_UserId",
+                name: "IX_EventParticipants_InviterId",
                 table: "EventParticipants",
-                column: "UserId");
+                column: "InviterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_OwnerUserId",

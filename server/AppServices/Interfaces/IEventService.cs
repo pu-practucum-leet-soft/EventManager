@@ -2,7 +2,6 @@ namespace EventManager.AppServices.Interfaces;
 
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
-using EventManager.Data.Entities;
 
 public interface IEventService
 {

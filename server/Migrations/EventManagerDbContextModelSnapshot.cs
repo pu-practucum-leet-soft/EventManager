@@ -32,34 +32,27 @@ namespace EventManager.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Location")
                         .HasMaxLength(400)
                         .HasColumnType("nvarchar(400)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<Guid>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Public")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("EventTitle");
 
-                    b.Property<string>("Visibility")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("eventStatus")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -73,17 +66,23 @@ namespace EventManager.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("InviteeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Inviter")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("EventId", "UserId");
+                    b.Property<Guid>("InviterId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasIndex("Inviter");
+                    b.Property<int>("inviteStatus")
+                        .HasColumnType("int");
 
-                    b.HasIndex("UserId");
+                    b.HasKey("EventId", "InviteeId");
+
+                    b.HasIndex("InviteeId");
+
+                    b.HasIndex("InviterId");
 
                     b.ToTable("EventParticipants");
                 });
@@ -141,15 +140,23 @@ namespace EventManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EventManager.Data.Entities.User", "User")
+                    b.HasOne("EventManager.Data.Entities.User", "Invitee")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("InviteeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EventManager.Data.Entities.User", "Inviter")
+                        .WithMany()
+                        .HasForeignKey("InviterId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Event");
 
-                    b.Navigation("User");
+                    b.Navigation("Invitee");
+
+                    b.Navigation("Inviter");
                 });
 
             modelBuilder.Entity("EventManager.Data.Entities.Event", b =>
