@@ -1,24 +1,28 @@
 import { Routes, Route } from "react-router";
 import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Events from "./pages/Events";
-import { getIsLoggedIn } from "@redux/slices/authSlice";
-import { useSelector } from "react-redux";
+import HomePage from "@pages/Home";
+import EventsPage from "@pages/Events";
+import InvitesPage from "@pages/Invites";
+import EventPage from "@pages/Event";
+import StatsPage from "@pages/Stats";
+import ProfilePage from "@pages/Profile";
+import LoginPage from "@pages/Login/Login";
+import RegisterPage from "@pages/Register/Register";
 
 function App() {
-  const isLoggedIn = useSelector(getIsLoggedIn);
-
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="events" element={<Events />} />
-        <Route path="invites" element={<div>Invites</div>} />
-        <Route
-          path="profile"
-          element={<div>{isLoggedIn ? "Logged In" : "Logged Out"}</div>}
-        />
+        <Route index element={<HomePage />} />
+        <Route path="events" element={<EventsPage />} />
+        <Route path="invites" element={<InvitesPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="stats" element={<StatsPage />} />
+        <Route path="events/:id" element={<EventPage />} />
       </Route>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="*" element={<h1>404 Not Found</h1>} />
     </Routes>
   );
 }

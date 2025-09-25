@@ -1,0 +1,14 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Section {
+  display: flex;
+  flex-direction: column;
+  @include section-card;
+  background-color: $color-background-1;
+
+  .Content {
+    flex-grow: 1;
+    padding: 10px 0;
+  }
+}

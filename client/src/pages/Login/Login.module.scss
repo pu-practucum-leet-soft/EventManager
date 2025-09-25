@@ -1,0 +1,57 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Login {
+  @include page-container;
+  height: 100vh;
+  background-color: $color-background-2;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+
+  .LoginSection {
+    flex-grow: 1;
+    max-width: 600px;
+
+    .Form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      .FormGroup {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        input {
+          padding: 10px;
+          border: 1px solid $color-background-3;
+          background-color: $color-background-2;
+          border-radius: 5px;
+          font-size: $font-md;
+          &:focus {
+            border-color: $color-primary;
+            outline: none;
+            box-shadow: 0 0 5px rgba($color-primary, 0.5);
+          }
+        }
+      }
+      .Actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 10px 0;
+
+        .RegisterButton,
+        .LoginButton {
+          font-size: $font-md;
+        }
+        .RegisterButton {
+          padding: 0;
+          &:hover {
+            color: darken($color-primary, 10%);
+          }
+        }
+      }
+    }
+  }
+}

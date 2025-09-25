@@ -1,0 +1,31 @@
+import styles from "./InviteCard.module.scss";
+
+export interface IInviteCardProps {
+  eventId: string;
+  eventTitle: string;
+  inviterName: string;
+  date: string;
+}
+
+const InviteCard: React.FC<IInviteCardProps> = ({
+  eventId,
+  eventTitle,
+  inviterName,
+  date,
+}) => {
+  return (
+    <div className={styles.InviteCard}>
+      <h3 className={styles.EventTitle}>{eventTitle}</h3>
+      <span className={styles.Inviter}>From {inviterName}</span>
+      <span className={styles.Date}>
+        Date: {new Date(date).toLocaleDateString()}
+      </span>
+      <div className={styles.Actions}>
+        <button className={styles.AcceptButton}>Accept</button>
+        <button className={styles.DeclineButton}>Decline</button>
+      </div>
+    </div>
+  );
+};
+
+export default InviteCard;

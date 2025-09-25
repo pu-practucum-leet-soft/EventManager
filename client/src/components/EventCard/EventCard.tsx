@@ -1,0 +1,40 @@
+import { Link } from "react-router";
+import styles from "./EventCard.module.scss";
+import Button from "@components/UI/Button";
+
+export interface IEventCardProps {
+  title: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+}
+
+const EventCard = ({
+  title,
+  location,
+  startDate,
+  endDate,
+}: IEventCardProps) => {
+  return (
+    <div className={styles.EventCard}>
+      <span className={styles.Title}>{title}</span>
+      <span>{location}</span>
+      <span>
+        {startDate} - {endDate}
+      </span>
+      <Link to={`/events/${title}`}>
+        <Button
+          className={styles.ViewButton}
+          inline
+          variant="primary"
+          color="primary"
+          border="rounded"
+        >
+          View Details
+        </Button>
+      </Link>
+    </div>
+  );
+};
+
+export default EventCard;

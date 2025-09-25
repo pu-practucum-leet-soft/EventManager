@@ -2,13 +2,19 @@
 $color-primary: #4a90e2;
 $color-secondary: #50e3c2;
 $color-accent: #f5a623;
-$color-background: #f0f0f0;
-$color-text: #333333;
+$color-text-dark: #333333;
+$color-text-light: #ffffff;
 
-$color-success: #7ed321;
-$color-warning: #f8e71c;
-$color-error: #d0021b;
-$color-info: #4a90e2;
+$color-background-1: #fafafa;
+$color-background-2: #e4e5f1;
+$color-background-3: #d1d3e0;
+$color-background-4: #9394a5;
+$color-background-5: #484b6a;
+
+$color-success: #36b37e;
+$color-danger: #ff5630;
+$color-warning: #ffab00;
+$color-info: #00b8d9;
 
 /* Font Sizes */
 $font-xs: 0.75rem; // 12px

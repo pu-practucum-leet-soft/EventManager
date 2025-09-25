@@ -1,0 +1,12 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Invites {
+  @include page-container;
+
+  background-color: $color-background-2;
+
+  .InviteList {
+    height: 100%;
+  }
+}

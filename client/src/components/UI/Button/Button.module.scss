@@ -1,0 +1,211 @@
+@use "sass:color";
+@use "@styles/variables" as *;
+
+.BaseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition: background-color 0.1s, color 0.1s;
+
+  &:hover {
+    transition: background-color 0.2s, color 0.1s;
+  }
+
+  &.PrimaryVariant {
+    &.PrimaryColor {
+      background-color: $color-primary;
+      color: $color-text-light;
+      fill: $color-text-light;
+
+      &:hover {
+        background-color: color.adjust($color-primary, $lightness: -10%);
+      }
+    }
+    &.SecondaryColor {
+      background-color: $color-secondary;
+      color: $color-text-light;
+      fill: $color-text-light;
+
+      &:hover {
+        background-color: color.adjust($color-secondary, $lightness: -10%);
+      }
+    }
+    &.SuccessColor {
+      background-color: $color-success;
+      color: $color-text-light;
+      fill: $color-text-light;
+
+      &:hover {
+        background-color: color.adjust($color-success, $lightness: -10%);
+      }
+    }
+    &.DangerColor {
+      background-color: $color-danger;
+      color: $color-text-light;
+      fill: $color-text-light;
+
+      &:hover {
+        background-color: color.adjust($color-danger, $lightness: -10%);
+      }
+    }
+  }
+
+  &.SecondaryVariant {
+    &.PrimaryColor {
+      background-color: $color-background-1;
+      color: $color-primary;
+      border-color: $color-primary;
+
+      &:hover {
+        background-color: $color-primary;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+    }
+    &.SecondaryColor {
+      background-color: $color-background-1;
+      color: $color-secondary;
+      fill: $color-secondary;
+      border-color: $color-secondary;
+
+      &:hover {
+        background-color: $color-secondary;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+    }
+    &.SuccessColor {
+      background-color: $color-text-light;
+      color: $color-success;
+      border-color: $color-success;
+
+      &:hover {
+        background-color: $color-success;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+    }
+    &.DangerColor {
+      background-color: $color-text-light;
+      color: $color-danger;
+      border-color: $color-danger;
+
+      &:hover {
+        background-color: $color-danger;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+    }
+
+    &.Loading {
+      &.PrimaryColor {
+        background-color: $color-primary;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+      &.SecondaryColor {
+        background-color: $color-secondary;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+      &.SuccessColor {
+        background-color: $color-success;
+        color: $color-text-light;
+        fill: $color-text-light;
+      }
+      &.DangerColor {
+        background-color: $color-danger;
+        color: $color-text-light;
+      }
+    }
+  }
+
+  &.TextVariant {
+    &.PrimaryColor {
+      background-color: transparent;
+      color: $color-primary;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    &.SecondaryColor {
+      background-color: transparent;
+      color: $color-secondary;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    &.SuccessColor {
+      background-color: transparent;
+      color: $color-success;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    &.DangerColor {
+      background-color: transparent;
+      color: $color-danger;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &.BlockBorder {
+    border-radius: 0;
+  }
+  &.RoundedBorder {
+    border-radius: 6px;
+  }
+  &.RoundedFullBorder {
+    border-radius: 9999px;
+  }
+
+  &.InlineButton {
+    display: inline-flex;
+    width: fit-content;
+    height: fit-content;
+  }
+
+  &.Loading {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin-top: -8px;
+      margin-left: -8px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    span {
+      visibility: hidden;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

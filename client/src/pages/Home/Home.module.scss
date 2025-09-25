@@ -1,0 +1,34 @@
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Home {
+  @include page-container;
+
+  background-color: $color-background-2;
+
+  .Content {
+    flex-grow: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+
+    .RecentEvents {
+      width: 100%;
+      background-color: $color-background-1;
+    }
+
+    .Subsections {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 20px;
+
+      .Invites,
+      .UpcomingEvents {
+        flex: 1;
+        background-color: $color-background-1;
+      }
+    }
+  }
+}

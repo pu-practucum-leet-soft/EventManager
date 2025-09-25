@@ -1,0 +1,142 @@
+@use "sass:color";
+@use "@styles/variables" as *;
+@use "@styles/mixins" as *;
+
+.Events {
+  @include page-container;
+
+  background-color: $color-background-2;
+
+  .EventsContainer {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 10px;
+    width: 100%;
+
+    .FilterBar {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 10px;
+      width: 100%;
+
+      .FilterFieldGroup {
+        display: flex;
+        flex-direction: column;
+
+        label {
+          padding: 3px 5px;
+          font-size: $font-xs;
+          background-color: $color-primary;
+          color: $color-text-light;
+
+          border-top-left-radius: 6px;
+          border-top-right-radius: 6px;
+        }
+      }
+
+      .FilterField {
+        padding: 8px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+      }
+
+      .SearchField {
+        max-width: 500px;
+        flex-grow: 1;
+      }
+
+      .FilterButton {
+        padding: 8px 20px;
+        font-size: 14px;
+        margin-left: auto;
+      }
+    }
+
+    .EventList {
+      flex-grow: 1;
+      background-color: $color-background-1;
+    }
+
+    .Actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+
+      .Pagination {
+        display: flex;
+        align-items: center;
+        height: fit-content;
+
+        background-color: $color-background-1;
+        border-radius: 100%;
+        .PageInfo {
+          font-size: $font-lg;
+          padding: 0 0.5em;
+          background-color: $color-background-1;
+        }
+
+        button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: $color-background-1;
+          padding: 0;
+          width: 32px;
+          height: 32px;
+
+          .PageIconRight {
+            position: relative;
+            left: -2px;
+          }
+
+          .PageIconLeft {
+            position: relative;
+            right: -2px;
+          }
+
+          .PageIconLeft,
+          .PageIconRight {
+            width: 80%;
+            height: 80%px;
+            fill: $color-primary;
+          }
+
+          &.ButtonLeft {
+            border-bottom-left-radius: 100%;
+            border-top-left-radius: 100%;
+          }
+
+          &.ButtonRight {
+            border-bottom-right-radius: 100%;
+            border-top-right-radius: 100%;
+          }
+
+          &:hover {
+            background-color: color.adjust(
+              $color-background-1,
+              $lightness: -10%
+            );
+          }
+        }
+      }
+      .AddEvent {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .AddEventButton {
+          padding: 10px 20px;
+          font-size: 14px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
