@@ -4,29 +4,29 @@ using EventManager.AppServices.Messaging.Responses.EventResponses;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
-using Microsoft.AspNetCore.Authorization;
+using EventManager.Data.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 
 namespace EventManager.AppServices.Implementations;
 
 public class EventService : IEventService
 {
     private readonly EventManagerDbContext _db;
-    // public EventService(EventManagerDbContext db) => _db = db;
+    private readonly ILogger<EventService> _logger;
+    public EventService(EventManagerDbContext db, ILogger<EventService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
-    public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req)
+    public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req, string userId)
     {
         var res = new CreateEventResponse();
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-
         if (!Guid.TryParse(userId, out var ownerId))
         {
-            res.StatusCode = Messaging.BusinessStatusCodeEnum.Unauthorized;
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.BadRequest;
             return res;
         }
 
@@ -34,30 +34,28 @@ public class EventService : IEventService
         {
             var ev = new Event
             {
-                Name = req.Name,
+                Title = req.Name,
                 Location = req.Location,
-                Notes = req.Notes,
+                Description = req.Description,
                 StartDate = req.StartDate,
-                OwnerUserId = ownerId
+                OwnerUserId = ownerId,
+                Status = Data.Enums.EventStatus.Active
             };
 
-            _db.Events.Add(ev);
+            await _db.Events.AddAsync(ev);
             // owner auto-joins
-            _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = ownerId });
+            await _db.EventParticipants.AddAsync(new EventParticipant { EventId = ev.Id, InviteeId = ownerId });
 
-            _db.SaveChanges();
-
-
+            await _db.SaveChangesAsync();
 
             return res;
         }
         catch (DbUpdateException ex)
         {
             res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
-            /// here is problem
-            // await tx.RollbackAsync(ct);
-            // _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
-            // return StatusCode(500, "Database error while creating event.");
+
+            _logger.LogError(ex, "CreateEvent DbUpdateException for owner {OwnerId}", ownerId);
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.BadRequest;
 
             return res;
         }
@@ -65,92 +63,147 @@ public class EventService : IEventService
 
     public async Task<EventViewModel> GetEvent(GetEventRequest req)
     {
-        var ev = _db.Events
+        var ev = await _db.Events
+            .AsNoTracking()
             .Include(e => e.Participants)
-            .FirstOrDefault(e => e.Id == req.EventId);
+            .FirstOrDefaultAsync(e => e.Id == req.EventId);
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
-        var participantIds = ev.Participants.Select(p => p.UserId).ToList();
+        var participantIds = ev.Participants.ToList();
         var owner = new UserViewModel
         {
-            FirstName = ev.OwnerUser.FirstName,
-            LastName = ev.OwnerUser.LastName,
+            UserName = ev.OwnerUser.UserName,
             Email = ev.OwnerUser.Email,
         };
 
         return new EventViewModel
         {
             Id = ev.Id,
-            Name = ev.Name,
+            Title = ev.Title,
+            Description = ev.Description,
+            StartDate = ev.StartDate,
             Location = ev.Location,
-            Notes = ev.Notes,
-            Owner = owner,
-            ParticipantUserIds = participantIds
+            OwnerUserId = ev.OwnerUserId,
+            Participants = ev.Participants,
+            Status = ev.Status
         };
     }
 
     public async Task<EditEventResponse> EditEvent(EditEventRequest req)
     {
-        var ev = _db.Events.FirstOrDefault(e => e.Id == req.EventId);
+        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == req.EventId);
+
         if (ev == null) throw new KeyNotFoundException("Event not found");
+
         if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can edit");
 
-        if (req.Name is not null) ev.Name = req.Name;
+        if (req.Title is not null) ev.Title = req.Title;
         if (req.Location is not null) ev.Location = req.Location;
-        if (req.Notes is not null) ev.Notes = req.Notes;
+        if (req.Description is not null) ev.Description = req.Description;
+        // the state of the properties below will be checked and ensured to have values in the FE
+        ev.StartDate = req.StartDate;
+        ev.Status = req.Status;
 
-        _db.SaveChanges();
+        await _db.SaveChangesAsync();
         return new EditEventResponse { Success = true };
     }
 
-    public async Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req)
+    public async Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req, string inviterId)
     {
-        var ev = _db.Events.Include(e => e.Participants).FirstOrDefault(e => e.Id == req.EventId);
+        var ev = await _db.Events.Include(e => e.Participants).FirstOrDefaultAsync(e => e.Id == req.EventId);
         if (ev == null) throw new KeyNotFoundException("Event not found");
-        if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can add participants");
 
-        var existing = ev.Participants.Select(p => p.UserId).ToHashSet();
+        // we've accepted that every user can inivite participants to an event.
+        //if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can add participants");
+
+        var existing = ev.Participants.Select(p => p.InviteeId).ToHashSet();
         int added = 0;
         foreach (var uid in req.UserIds)
         {
             if (!existing.Contains(uid))
             {
-                _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = uid });
+                await _db.EventParticipants.AddAsync(new EventParticipant
+                {
+                    EventId = ev.Id,
+                    InviteeId = uid,
+                    InviterId = Guid.Parse(inviterId),
+                    Status = Data.Enums.InviteStatus.Invited // added status "Invited" upon invitation as
+                                                             // requested in the assignment
+                });
                 added++;
             }
         }
-        _db.SaveChanges();
+        await _db.SaveChangesAsync();
         return new AddParticipantsResponse { Added = added };
     }
 
     public async Task<GetAllEventsResponse> GetAllEvents()
     {
-        // Get the user's Id from Claims and parse it to a Guid
-        // Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-
-        //var q = _db.Events.Where(e => e.OwnerUserId == ownerId);
-
-        //var list = q.Select(e => new EventSummary
-        //{
-        //    Id = e.Id,
-        //    Name = e.Name,
-        //    Location = e.Location
-        //}).ToList();
-
-        var res = new List<EventSummary>();
-
         var response = new GetAllEventsResponse();
-        response.Events = res;
 
-        res.Add(new EventSummary { Name = "eventData1", Location = "Sofia", Notes = "asd", ParticipantsCount = new List<string> { "1", "2", "3", "5", "12" }.Count });
-        res.Add(new EventSummary { Name = "eventData2", Location = "Sofia", Notes = "afsda", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
-        res.Add(new EventSummary { Name = "eventData3", Location = "Plovdiv", Notes = "asdgwefw", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
-        res.Add(new EventSummary { Name = "eventData4", Location = "Plovdiv", Notes = "asdwd", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
-        res.Add(new EventSummary { Name = "eventData5", Location = "Varna", Notes = "asdfsadg", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2" }.Count });
-        res.Add(new EventSummary { Name = "eventData6", Location = "Varna", Notes = "asdgs", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
-        res.Add(new EventSummary { Name = "eventData7", Location = "Plovdiv", Notes = "swef", ParticipantsCount = new List<string> { "1", "2", "3" }.Count });
+        var q = await _db.Events.AsNoTracking().ToListAsync();
+
+        var allEventsList = q.Select(e => new EventSummary
+        {
+            Id = e.Id,
+            Title = e.Title,
+            Description = e.Description,
+            StartDate = e.StartDate,
+            OwnerUserId = e.OwnerUserId,
+            Status = e.Status,
+            Location = e.Location,
+            Participants = e.Participants
+        }).ToList();
+
+        response.Events = allEventsList;
+
+        //res.Add(new EventSummary { Name = "eventData1", Location = "Sofia", Description = "asd", ParticipantsCount = new List<string> { "1", "2", "3", "5", "12" }.Count });
+        //res.Add(new EventSummary { Name = "eventData2", Location = "Sofia", Description = "afsda", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
+        //res.Add(new EventSummary { Name = "eventData3", Location = "Plovdiv", Description = "asdgwefw", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
+        //res.Add(new EventSummary { Name = "eventData4", Location = "Plovdiv", Description = "asdwd", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
+        //res.Add(new EventSummary { Name = "eventData5", Location = "Varna", Description = "asdfsadg", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2" }.Count });
+        //res.Add(new EventSummary { Name = "eventData6", Location = "Varna", Description = "asdgs", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
+        //res.Add(new EventSummary { Name = "eventData7", Location = "Plovdiv", Description = "swef", ParticipantsCount = new List<string> { "1", "2", "3" }.Count });
 
         return response;
+    }
+
+    //Общ брой събития, създадени от потребителя.
+    //Процент участници, потвърдили участие("Потвърден") спрямо всички поканени.
+    public async Task<StatisticViewModel> GetEventStatistic(Guid ownerId)
+    {
+        var ownerEvents = await _db.Events
+            .AsNoTracking()
+            .Where(x => x.OwnerUserId == ownerId)
+            .ToListAsync();
+
+        var res = new StatisticViewModel();
+        // Total count of events created by the uuser.
+        res.OwnerEventsCount = ownerEvents.Count();
+
+        foreach ( var @event in ownerEvents)
+        {
+            // Calculate percentage of "Accepted" invites against all "Invited".
+            var eventParticipants = @event.Participants.ToList();
+
+            var participantsWithAcceptedInvites = eventParticipants
+                .Where(x => x.Status == InviteStatus.Accepted)
+                .Count();
+
+            var particpantsWithInvites = eventParticipants.Count();
+
+            var currentEventStastic = participantsWithAcceptedInvites / particpantsWithInvites;
+
+            res.EventStatistics.Add(new EventStatistic
+            { 
+                EventId = @event.Id,
+                AcceptedInvitesCount = participantsWithAcceptedInvites,
+                TotalInvitedCount = particpantsWithInvites,
+                CalculatedStatsticResult = currentEventStastic
+            });
+        }
+
+        return res;
     }
 }
