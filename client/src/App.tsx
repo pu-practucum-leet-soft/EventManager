@@ -6,6 +6,8 @@ import InvitesPage from "@pages/Invites";
 import EventPage from "@pages/Event";
 import StatsPage from "@pages/Stats";
 import ProfilePage from "@pages/Profile";
+import LoginPage from "@pages/Login/Login";
+import RegisterPage from "@pages/Register/Register";
 
 function App() {
   return (
@@ -16,9 +18,11 @@ function App() {
         <Route path="invites" element={<InvitesPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="stats" element={<StatsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
         <Route path="events/:id" element={<EventPage />} />
       </Route>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="*" element={<h1>404 Not Found</h1>} />
     </Routes>
   );
 }
