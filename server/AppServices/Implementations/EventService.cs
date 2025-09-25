@@ -64,7 +64,7 @@ public class EventService : IEventService
                 Description = req.Event.Description,
                 StartDate = req.Event.StartDate, 
                 OwnerUserId = ownerId,
-                Public = true,
+                Public = req.Event.Public,
                 eventStatus = req.Event.Status,
             };
 
