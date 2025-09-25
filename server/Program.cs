@@ -32,6 +32,7 @@ namespace EventManager
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
+
             builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
@@ -53,6 +54,7 @@ namespace EventManager
                 });
             });
 
+            builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
 
             builder.Services.AddEndpointsApiExplorer();
