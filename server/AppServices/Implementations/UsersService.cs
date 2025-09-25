@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Data;
-using System.Security.Claims;
-using EventManager.AppServices.Interfaces;
+﻿using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.UserRequests;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using System.Security.Claims;
+using System.Text;
 
 namespace EventManager.AppServices.Implementations
 {
@@ -15,6 +17,9 @@ namespace EventManager.AppServices.Implementations
     {
         private readonly EventManagerDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly SignInManager<IdentityUser> _signInManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UsersService"/> class.
@@ -22,11 +27,16 @@ namespace EventManager.AppServices.Implementations
         /// <param name="logger">Logger.</param>
         /// <param name="context">Movie database context.</param>
 
-
-        public UsersService(EventManagerDbContext context, IConfiguration configuration)
+        public UsersService(
+            EventManagerDbContext context,
+            IConfiguration configuration,
+            UserManager<IdentityUser> userManager,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _configuration = configuration;
+            _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<CreateUserResponse> SaveAsync(CreateUserRequest request)
@@ -46,11 +56,9 @@ namespace EventManager.AppServices.Implementations
 
                 var user = new User
                 {
-                    FirstName = request.User.FirstName,
-                    LastName = request.User.LastName,
+                    UserName = request.User.UserName,
                     Email = request.User.Email,
                     PasswordHash = request.User.Password,
-                    Role = "user"
                 };
 
                 await _context.Users.AddAsync(user);
@@ -66,6 +74,7 @@ namespace EventManager.AppServices.Implementations
             }
             return response;
         }
+
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             LoginResponse response = new();
@@ -77,33 +86,61 @@ namespace EventManager.AppServices.Implementations
                 return response;
             }
 
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                response.Message = "Invalid login attempt.";
+                return response;
+            }
+            var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!passwordValid)
+            {
+                response.Message = "Invalid login attempt.";
+                return response;
+            }
+
             try
             {
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u =>
-                        u.Email == request.Email &&
-                        u.PasswordHash == request.Password);
+                //var user = await _context.Users
+                //    .FirstOrDefaultAsync(u =>
+                //        u.Email == request.Email &&
+                //        u.PasswordHash == request.Password);
 
-                if (user == null)
+                //if (user == null)
+                //{
+                //    response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                //    response.Message = "Невалиден имейл или парола.";
+                //    return response;
+                //}
+
+                var roles = await _userManager.GetRolesAsync(user);
+                var role = roles.First();
+                // 👉 Тук вече имаш пълен списък с роли
+                // Можеш да ги вкараш като Claims в cookie/JWT
+                var claims = new List<Claim>
                 {
-                    response.StatusCode = BusinessStatusCodeEnum.NotFound;
-                    response.Message = "Невалиден имейл или парола.";
-                    return response;
-                }
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email!)
+                };
 
+                claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
+                var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                // Създаване на cookie (ако ползваш cookie auth)
+                await _signInManager.SignInAsync(user, isPersistent: false);
 
                 response.StatusCode = BusinessStatusCodeEnum.Success;
-                response.Token = JwtHelper.GenerateJwtToken(user.Id.ToString(), user.Role, _configuration);
+                response.Token = JwtHelper.GenerateJwtToken(user.Id.ToString(), role, _configuration);
 
                 return new LoginResponse
                 {
-                    FristName = user.FirstName,
-                    LastName = user.LastName,
+                    UserName = user.UserName,
                     Email = user.Email,
-                    Role = user.Role,
-                    Id = user.Id,
-                    Token = response.Token
+                    Role = role,
+                    Id = Guid.Parse(user.Id),
+                    Token = response.Token,
 
                 };
 
@@ -126,8 +163,7 @@ namespace EventManager.AppServices.Implementations
 
             return new UserViewModel
             {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
+                UserName = user.UserName,
                 Email = user.Email
             };
         }
@@ -142,5 +178,17 @@ namespace EventManager.AppServices.Implementations
             return new UserIdResponse { Id = user.Id };
         }
 
+        public async Task<string> AssignRole(string userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return "User not found";
+
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+
+            if (result.Succeeded)
+                return "Role assigned";
+            else
+                return new StringBuilder().Append(result.Errors).ToString();
+        }
     }
 }

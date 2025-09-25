@@ -1,20 +1,62 @@
 using EventManager.AppServices.Implementations;
 using EventManager.AppServices.Interfaces;
+using EventManager.Data.Contexts;
+using EventManager.Data.Entities;
+using EventManager.Data.Seeder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 namespace EventManager
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            builder.Services.AddDbContext<EventManagerDbContext>(x =>
+                x.UseSqlServer(connectionString));
+
+            builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+            .AddEntityFrameworkStores<EventManagerDbContext>()
+            .AddDefaultTokenProviders();
+
             builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "EventManager API",
+                    Description = "An ASP.NET Core Web API for managing events.",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Contact",
+                        Url = new Uri("https://example.com/contact")
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "License",
+                        Url = new Uri("https://example.com/license")
+                    }
+                });
+            });
 
             builder.Services.AddScoped<IEventService, EventService>();
-            
+
             builder.Services.AddEndpointsApiExplorer();
-            
+
             var ClientAppPolicy = "ClientAppPolicy";
 
             builder.Services.AddCors(options =>
@@ -34,6 +76,8 @@ namespace EventManager
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
             else
             {
@@ -42,14 +86,23 @@ namespace EventManager
 
             app.UseHttpsRedirection();
 
-            
+
             app.UseCors(ClientAppPolicy);
             
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseSwagger();
 
             app.MapControllers();
 
-            app.Run();
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                await RoleDataSeeder.SeedRolesAsync(roleManager);
+            }
+
+            await app.RunAsync();
         }
     }
 }
