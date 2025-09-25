@@ -17,9 +17,9 @@ namespace EventManager.AppServices.Implementations
     {
         private readonly EventManagerDbContext _context;
         private readonly IConfiguration _configuration;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<User> _signInManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UsersService"/> class.
@@ -30,7 +30,7 @@ namespace EventManager.AppServices.Implementations
         public UsersService(
             EventManagerDbContext context,
             IConfiguration configuration,
-            UserManager<IdentityUser> userManager,
+            UserManager<User> userManager,
             IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
@@ -139,7 +139,7 @@ namespace EventManager.AppServices.Implementations
                     UserName = user.UserName,
                     Email = user.Email,
                     Role = role,
-                    Id = Guid.Parse(user.Id),
+                    Id = user.Id,
                     Token = response.Token,
 
                 };
