@@ -2,5 +2,6 @@
 {
     public class CreateUserResponse : ServiceResponseBase
     {
+        public string Message { get; set; }
     }
 }

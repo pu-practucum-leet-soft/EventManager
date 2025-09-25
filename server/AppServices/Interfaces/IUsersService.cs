@@ -12,13 +12,10 @@ namespace EventManager.AppServices.Interfaces
         /// <param name="request">Create user request object.</param>
         /// <returns>Return 200 ok.</returns>
         Task<CreateUserResponse> SaveAsync(CreateUserRequest request);
-
-
-        Task<LoginResponse> LoginAsync(LoginRequest request);
-
         Task<UserViewModel?> GetUserByIdAsync(string id);
-
         Task<UserIdResponse> GetUserIdByEmailAsync(string email);
-
+        Task<LoginResponse> LoginAsync(LoginRequest request);
+        Task LogoutAsync();
+        Task<string> AssignRole(string userId, string roleName);
     }
 }

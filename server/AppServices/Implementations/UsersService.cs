@@ -5,21 +5,21 @@ using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
-using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using static System.Net.WebRequestMethods;
 
 namespace EventManager.AppServices.Implementations
 {
     public class UsersService : IUsersService
     {
         private readonly EventManagerDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly IConfiguration _config;
         private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly SignInManager<User> _signInManager;
+        private readonly IJwtHelper _jwtHelper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UsersService"/> class.
@@ -31,130 +31,47 @@ namespace EventManager.AppServices.Implementations
             EventManagerDbContext context,
             IConfiguration configuration,
             UserManager<User> userManager,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IJwtHelper jwtHelper)
         {
             _context = context;
-            _configuration = configuration;
+            _config = configuration;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+            _jwtHelper = jwtHelper;
         }
 
         public async Task<CreateUserResponse> SaveAsync(CreateUserRequest request)
         {
             CreateUserResponse response = new();
 
-            try
+            var existingUser = await _userManager.FindByEmailAsync(request.User.Email);
+
+            if (existingUser is not null)
             {
-                var existingUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.User.Email);
+                response.StatusCode = BusinessStatusCodeEnum.Conflict;
+                return response;
+            }
 
-                if (existingUser != null)
-                {
-                    response.StatusCode = BusinessStatusCodeEnum.Conflict;
-                    return response;
-                }
+            var user = new User
+            {
+                UserName = request.User.UserName,
+                Email = request.User.Email
+            };
 
-                var user = new User
-                {
-                    UserName = request.User.UserName,
-                    Email = request.User.Email,
-                    PasswordHash = request.User.Password,
-                };
-
-                await _context.Users.AddAsync(user);
-                await _context.SaveChangesAsync();
-
+            var create = await _userManager.CreateAsync(user, request.User.Password);
+            if (create.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "User");
                 response.StatusCode = BusinessStatusCodeEnum.Success;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("ERROR: " + ex.Message);
-                response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
-                return response;
-            }
-            return response;
-        }
-
-        public async Task<LoginResponse> LoginAsync(LoginRequest request)
-        {
-            LoginResponse response = new();
-
-            if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
-            {
-                response.StatusCode = BusinessStatusCodeEnum.BadRequest;
-                response.Message = "Невалидна заявка.";
                 return response;
             }
 
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-            {
-                response.Message = "Invalid login attempt.";
-                return response;
-            }
-            var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-            if (!passwordValid)
-            {
-                response.Message = "Invalid login attempt.";
-                return response;
-            }
-
-            try
-            {
-                //var user = await _context.Users
-                //    .FirstOrDefaultAsync(u =>
-                //        u.Email == request.Email &&
-                //        u.PasswordHash == request.Password);
-
-                //if (user == null)
-                //{
-                //    response.StatusCode = BusinessStatusCodeEnum.NotFound;
-                //    response.Message = "Невалиден имейл или парола.";
-                //    return response;
-                //}
-
-                var roles = await _userManager.GetRolesAsync(user);
-                var role = roles.First();
-                // 👉 Тук вече имаш пълен списък с роли
-                // Можеш да ги вкараш като Claims в cookie/JWT
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email!)
-                };
-
-                claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-
-                var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
-                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-
-                // Създаване на cookie (ако ползваш cookie auth)
-                await _signInManager.SignInAsync(user, isPersistent: false);
-
-                response.StatusCode = BusinessStatusCodeEnum.Success;
-                response.Token = JwtHelper.GenerateJwtToken(user.Id.ToString(), role, _configuration);
-
-                return new LoginResponse
-                {
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    Role = role,
-                    Id = user.Id,
-                    Token = response.Token,
-
-                };
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("LOGIN ERROR: " + ex.Message);
-                response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
-            }
-
+            response.StatusCode = BusinessStatusCodeEnum.BadRequest;
+            response.Message = string.Join("; ", create.Errors.Select(e => e.Description));
             return response;
 
         }
-
 
         public async Task<UserViewModel?> GetUserByIdAsync(string id)
         {
@@ -168,7 +85,6 @@ namespace EventManager.AppServices.Implementations
             };
         }
 
-
         public async Task<UserIdResponse> GetUserIdByEmailAsync(string email)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -176,6 +92,88 @@ namespace EventManager.AppServices.Implementations
                 throw new Exception("User not found");
 
             return new UserIdResponse { Id = user.Id };
+        }
+
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
+        {
+            var response = new LoginResponse();
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
+            {
+                return new LoginResponse
+                {
+                    Email = request.Email,
+                    Message = "Въведените имейл и парола не съвпадат със съшествуващ потребител.",
+                    StatusCode = BusinessStatusCodeEnum.BadRequest,
+                    UserName = user != null ? user?.UserName : "Несъществуващ потребител"
+                };
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            // В случай, че на потребителя са назначени 2 роли (Admin или User) в JWT ще се генерира основната
+            var mainRole = ResolveMainRole(roles);
+
+            var jwt = await _jwtHelper.GenerateJwt(user);
+
+            var refreshExpiryMins = int.Parse(_config["RefreshTokenSettings:ExpiryMinutes"]!);
+            var refresh = new RefreshToken
+            {
+                Token = GenerateSecureRefreshToken(),
+                UserId = user.Id,
+                Expires = DateTime.UtcNow.AddMinutes(refreshExpiryMins),
+                CreatedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+            };
+
+            await _context.RefreshTokens.AddAsync(refresh);
+            await _context.SaveChangesAsync();
+
+            var http = _httpContextAccessor.HttpContext!;
+            http.Response.Cookies.Append("jwt-token", jwt.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = jwt.TokenExpiryTime
+            });
+
+            http.Response.Cookies.Append("refresh-token", refresh.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = refresh.Expires
+            });
+
+            return new LoginResponse
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                Role = mainRole,
+                Token = jwt.Token,
+                TokenExpiryTime = jwt.TokenExpiryTime,
+                Message = $"Вписването във вашият профил премина успешно. Добре дошли, {user.UserName}",
+                StatusCode = BusinessStatusCodeEnum.Success
+            };
+        }
+
+        public async Task LogoutAsync()
+        {
+            var http = _httpContextAccessor.HttpContext!;
+            var rt = http.Request.Cookies["refresh-token"];
+
+            if (!string.IsNullOrEmpty(rt))
+            {
+                var stored = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == rt);
+                if (stored is not null)
+                {
+                    stored.Revoked = DateTime.UtcNow;
+                    stored.RevokedByIp = http.Connection.RemoteIpAddress?.ToString();
+                    await _context.SaveChangesAsync();
+                }
+            }
+            http.Response.Cookies.Delete("jwt-token");
+            http.Response.Cookies.Delete("refresh-token");
         }
 
         public async Task<string> AssignRole(string userId, string roleName)
@@ -190,5 +188,15 @@ namespace EventManager.AppServices.Implementations
             else
                 return new StringBuilder().Append(result.Errors).ToString();
         }
+
+        private static string GenerateSecureRefreshToken()
+        {
+            var bytes = new byte[64];
+            RandomNumberGenerator.Fill(bytes);
+            return Convert.ToBase64String(bytes);
+        }
+
+        private static string ResolveMainRole(IList<string> roles)
+            => roles.Contains("Admin") ? "Admin" : "User";
     }
 }
