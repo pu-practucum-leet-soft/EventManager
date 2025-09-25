@@ -13,6 +13,8 @@ namespace EventManager.Data.Contexts
 
         public DbSet<EventParticipant> EventParticipants { get; set; }
 
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
         public EventManagerDbContext(DbContextOptions<EventManagerDbContext> options) : base(options)
         {
         }
@@ -62,6 +64,17 @@ namespace EventManager.Data.Contexts
                       .WithMany()
                       .HasForeignKey(ep => ep.InviterId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<RefreshToken>(e =>
+            {
+                e.ToTable("RefreshTokens");
+                e.HasIndex(x => x.Token).IsUnique();
+                e.Property(x => x.Token).HasMaxLength(512).IsRequired();
+                e.HasOne(x => x.User)
+                 .WithMany()
+                 .HasForeignKey(x => x.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
         }
 
