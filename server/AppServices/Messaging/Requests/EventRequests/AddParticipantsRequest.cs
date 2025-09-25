@@ -1,8 +1,8 @@
 namespace EventManager.AppServices.Messaging.Requests.EventRequests;
 
-public class AddParticipantsRequest
+public class AddParticipantsRequest : ServiceRequestBase
 {
     public Guid EventId { get; set; }
     public Guid ActorUserId { get; set; } // must be owner
-    public IEnumerable<Guid> UserIds { get; set; } = Array.Empty<Guid>();
+    public List<Guid> UserIds { get; set; } = new();
 }

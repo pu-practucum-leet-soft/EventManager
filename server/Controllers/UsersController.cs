@@ -38,6 +38,8 @@ namespace EventManager.Controllers
             if (response.StatusCode == BusinessStatusCodeEnum.InternalServerError)
                 return StatusCode(500, new { message = "Възникна вътрешна грешка." });
 
+            Console.WriteLine(model);
+
             return Ok(response);
         }
 
@@ -45,6 +47,7 @@ namespace EventManager.Controllers
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+
             return Ok(await _service.LoginAsync(request));
         }
 
@@ -56,11 +59,15 @@ namespace EventManager.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var role = User.FindFirstValue(ClaimTypes.Role);
+            var email = User.FindFirstValue(ClaimTypes.Name); // ако в токена Name е email
 
+            if (userId == null)
+                return Unauthorized(new { message = "Missing or invalid token." });
 
             return Ok(new
             {
-                UserId = userId,
+                Id = userId,
+                Email = email,
                 Role = role
             });
         }
@@ -80,6 +87,13 @@ namespace EventManager.Controllers
             {
                 return NotFound(ex.Message);
             }
+        }
+
+
+        [HttpGet("ping")]
+        public IActionResult Ping()
+        {
+            return Ok(new { message = "API is working!" });
         }
 
     }

@@ -1,10 +1,10 @@
 namespace EventManager.AppServices.Messaging.Requests.EventRequests;
 
-public class GetEventRequest
+public class GetEventByIdRequest : ServiceRequestBase
 {
     public Guid EventId { get; set; }
        
-    public GetEventRequest(Guid eventId)
+    public GetEventByIdRequest(Guid eventId)
     {
         EventId = eventId;
     }

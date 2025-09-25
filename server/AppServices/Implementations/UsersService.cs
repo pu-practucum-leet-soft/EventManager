@@ -28,7 +28,7 @@ namespace EventManager.AppServices.Implementations
             _context = context;
             _configuration = configuration;
         }
-
+        
         public async Task<CreateUserResponse> SaveAsync(CreateUserRequest request)
         {
             CreateUserResponse response = new();
@@ -70,6 +70,7 @@ namespace EventManager.AppServices.Implementations
         {
             LoginResponse response = new();
 
+           
             if (request == null || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
                 response.StatusCode = BusinessStatusCodeEnum.BadRequest;
@@ -103,8 +104,8 @@ namespace EventManager.AppServices.Implementations
                     Email = user.Email,
                     Role = user.Role,
                     Id = user.Id,
-                    Token = response.Token
-
+                    Token = response.Token,
+                    StatusCode = response.StatusCode
                 };
 
             }

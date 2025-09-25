@@ -1,13 +1,16 @@
 
 
+using System.Text.Json.Serialization;
+
 namespace EventManager.AppServices.Messaging.Requests.EventRequests;
 
 public class CreateEventRequest : ServiceRequestBase
 {
     public EventModel Event { get; set; }
 
-    public CreateEventRequest(EventModel _event)
+    [JsonConstructor] 
+    public CreateEventRequest(EventModel Event) 
     {
-        Event = _event;
+        this.Event = Event;
     }
 }

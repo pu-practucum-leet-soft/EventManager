@@ -3,6 +3,8 @@
     public class ServiceResponseBase
     {
         public BusinessStatusCodeEnum StatusCode { get; set; }
+       
+        public string Message { get; set; }
 
         public ServiceResponseBase()
         {

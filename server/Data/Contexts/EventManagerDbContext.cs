@@ -18,18 +18,27 @@ namespace EventManager.Data.Contexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<EventParticipant>()
-                .HasKey(ep => new { ep.EventId, ep.UserId });
+    .HasKey(ep => new { ep.EventId, ep.InviteeId });
 
             modelBuilder.Entity<EventParticipant>()
                 .HasOne(ep => ep.Event)
                 .WithMany(e => e.Participants)
-                .HasForeignKey(ep => ep.EventId);
+                .HasForeignKey(ep => ep.EventId)
+                .OnDelete(DeleteBehavior.Cascade); // трий участниците при триене на Event
 
             modelBuilder.Entity<EventParticipant>()
-                .HasOne(ep => ep.User)
+                .HasOne(ep => ep.Invitee)
                 .WithMany()
-                .HasForeignKey(ep => ep.UserId);
+                .HasForeignKey(ep => ep.InviteeId)
+                .OnDelete(DeleteBehavior.Restrict); // НЕ каскадирай от User
+
+            modelBuilder.Entity<EventParticipant>()
+                .HasOne(ep => ep.Inviter)
+                .WithMany()
+                .HasForeignKey(ep => ep.InviterId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
