@@ -3,19 +3,22 @@
 
 .EventCard {
   @include element-card;
+  gap: 20px;
 
   a {
     display: flex;
     flex-direction: row;
     text-decoration: none;
     color: inherit;
-    padding: 0.5em;
+    // padding: 0.5em;
   }
-  span {
-    padding: 0.5em;
+  .Title {
+    font-size: $font-md;
+    font-weight: bold;
+    flex-grow: 1;
   }
 
-  .Title {
-    flex-grow: 1;
+  .ViewButton {
+    padding: 0.5em;
   }
 }

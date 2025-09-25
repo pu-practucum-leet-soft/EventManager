@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import styles from "./EventCard.module.scss";
+import Button from "@components/UI/Button";
 
 export interface IEventCardProps {
   title: string;
@@ -21,7 +22,17 @@ const EventCard = ({
       <span>
         {startDate} - {endDate}
       </span>
-      <Link to={`/events/${title}`}>View Details</Link>
+      <Link to={`/events/${title}`}>
+        <Button
+          className={styles.ViewButton}
+          inline
+          variant="primary"
+          color="primary"
+          border="rounded"
+        >
+          View Details
+        </Button>
+      </Link>
     </div>
   );
 };
