@@ -45,7 +45,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> EditChangesEventAsync([FromBody] EventModel _event)
+    public async Task<IActionResult> EditChangesEventAsync([FromBody] EventModel _event, [FromRoute] Guid id)
 
     {
         // userId от токена
@@ -58,7 +58,7 @@ public class EventsController : ControllerBase
                 Message = "Липсва валидна идентичност."
             });
 
-        var res = await _service.UpdateEventAsync(new(_event), actingUserId);
+        var res = await _service.UpdateEventAsync(new(_event), actingUserId,id);
 
 
         return Ok(res);
@@ -71,7 +71,7 @@ public class EventsController : ControllerBase
 
     // GetEvents
     [Authorize]
-    [HttpGet]
+    [HttpGet()]
     [ProducesResponseType(typeof(GetEventsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -98,7 +98,7 @@ public class EventsController : ControllerBase
 
     // GetEvents
     [Authorize]
-    [HttpGet("title")]
+    [HttpGet("by-title")]
     [ProducesResponseType(typeof(GetEventsByTitleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -200,11 +200,15 @@ public class EventsController : ControllerBase
     {
 
              var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(meStr, out var me))
-            return Unauthorized();
+            if (!Guid.TryParse(meStr, out var actingUserId))
+            return Unauthorized(new ServiceResponseError
+            {
+                StatusCode = BusinessStatusCodeEnum.Unauthorized,
+                Message = "Липсва валидна идентичност."
+            });
 
 
-            var res = await _service.LoadEventByIdAsync(new GetEventByIdRequest(id), me);
+        var res = await _service.LoadEventByIdAsync(new GetEventByIdRequest(id), actingUserId);
             return Ok(res);
     }
 
@@ -234,8 +238,9 @@ public class EventsController : ControllerBase
         var res = await _service.SaveParticipantsAsync(new AddParticipantsRequest
         {
             EventId = id,
+            ActorUserId = actingUserId,
             UserIds = userIds ?? new List<Guid>()
-        }, actingUserId);
+        });
 
         return Ok(res);
        

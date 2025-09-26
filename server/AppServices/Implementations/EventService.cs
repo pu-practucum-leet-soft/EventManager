@@ -101,71 +101,83 @@ public class EventService : IEventService
     }
 
     //edit participents
-    public async Task<EditEventResponse> UpdateEventAsync(EditEventRequest req, Guid actingUserId)
+    public async Task<EditEventResponse> UpdateEventAsync(EditEventRequest req, Guid actingUserId, Guid IdEvent)
     {
         var res = new EditEventResponse();
 
-        var ev = await _context.Events.FirstOrDefaultAsync(e => e.Id == req.Event.Id);
-
-
-
-        // Съществува ли такъв евент
-        if (ev == null)
+        try
         {
-            res.StatusCode = Messaging.BusinessStatusCodeEnum.NotFound;
-            res.Message = "Събитието не е намерено.";
-            return res;
+
+            var ev = await _context.Events.FirstOrDefaultAsync(e => e.Id == IdEvent);
+
+
+
+            // Съществува ли такъв евент
+            if (ev == null)
+            {
+                res.StatusCode = Messaging.BusinessStatusCodeEnum.NotFound;
+                res.Message = "Събитието не е намерено.";
+                return res;
+            }
+
+            // Проверка дали съм Организатора
+            if (ev.OwnerUserId != actingUserId)
+            {
+                res.StatusCode = Messaging.BusinessStatusCodeEnum.Unauthorized;
+                res.Message = "Нямате права за редакция.";
+                return res;
+            }
+
+
+            // Проверка за по стара дата от днес
+
+            if (req.Event.StartDate < DateTime.UtcNow.Date)
+            {
+                res.StatusCode = BusinessStatusCodeEnum.BadRequest;
+                res.Message = "Началната дата не може да бъде по-ранна от днес.";
+                return res;
+            }
+
+
+
+            ev.Title = req.Event.Title;
+            ev.Location = req.Event.Location;
+            ev.Description = req.Event.Description;
+            ev.StartDate = req.Event.StartDate;
+            ev.Public = req.Event.Public;
+            ev.eventStatus = req.Event.Status;
+
+
+
+            await _context.SaveChangesAsync();
+
+            res.StatusCode = BusinessStatusCodeEnum.Success;
+            res.Message = "Събитието е обновено.";
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error  add uppdate event {EventId}", IdEvent);
+            res.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+            res.Message = "Грешка при запис в базата.";
         }
 
-        // Проверка дали съм Организатора
-        if (ev.OwnerUserId != actingUserId)
-        {
-            res.StatusCode = Messaging.BusinessStatusCodeEnum.Unauthorized;
-            res.Message = "Нямате права за редакция.";
-            return res;
-        }
-
-        
-        // Проверка за по стара дата от днес
-
-        if (req.Event.StartDate < DateTime.UtcNow.Date)
-        {
-            res.StatusCode = BusinessStatusCodeEnum.BadRequest;
-            res.Message = "Началната дата не може да бъде по-ранна от днес.";
-            return res;
-        }
-        
-
-        
-        ev.Title = req.Event.Title;
-        ev.Location = req.Event.Location;
-        ev.Description = req.Event.Description;
-        ev.StartDate = req.Event.StartDate;
-        ev.Public = req.Event.Public;
-        ev.eventStatus = req.Event.Status;
-          
-
-
-        await _context.SaveChangesAsync();
-
-        res.StatusCode = Messaging.BusinessStatusCodeEnum.Success;
-        res.Message = "Събитието е обновено.";
         return res;
     }
 
 
 
-    public async Task<AddParticipantsResponse> SaveParticipantsAsync(AddParticipantsRequest req, Guid actingUserId)
+    public async Task<AddParticipantsResponse> SaveParticipantsAsync(AddParticipantsRequest req)
     {
-        var res = new AddParticipantsResponse();
+        var response = new AddParticipantsResponse();
 
 
 
         if (req.EventId == Guid.Empty || req.UserIds is null || req.UserIds.Count == 0)
         {
-            res.StatusCode = BusinessStatusCodeEnum.BadRequest;
-            res.Message = "Невалидна заявка: EventId/UserIds.";
-            return res;
+            response.StatusCode = BusinessStatusCodeEnum.BadRequest;
+            response.Message = "Невалидна заявка: EventId/UserIds.";
+            return response;
         }
 
         try
@@ -177,33 +189,35 @@ public class EventService : IEventService
 
             if (ev is null)
             {
-                res.StatusCode = BusinessStatusCodeEnum.NotFound;
-                res.Message = "Събитието не е намерено.";
-                return res;
+                response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                response.Message = "Събитието не е намерено.";
+                return response;
             }
 
             if (ev.eventStatus != EventStatus.Active)
             {
-                res.StatusCode = BusinessStatusCodeEnum.BadRequest;
-                res.Message = "Събитието е неактивно/архивирано.";
-                return res;
+                response.StatusCode = BusinessStatusCodeEnum.BadRequest;
+                response.Message = "Събитието е неактивно/архивирано.";
+                return response;
             }
 
-            var isOwner = ev.OwnerUserId == actingUserId;
+            var isOwner = ev.OwnerUserId == req.ActorUserId;
+
+            var isPublic = ev.Public;
 
             var isParticipant = _context.EventParticipants
-            .Any(p => p.EventId == ev.Id && p.InviteeId == actingUserId  && p.inviteStatus == InviteStatus.Accepted);
+            .Any(p => p.EventId == ev.Id && p.InviteeId == req.ActorUserId && p.inviteStatus == InviteStatus.Accepted);
 
 
-            var hasAccess = isOwner || isParticipant;
+            var hasAccess = (isOwner) || (isParticipant && isPublic);
 
 
-            // 2) права (ако само owner може да добавя)
+            // 1) права Private (само owner може да добавя)  2) права Public (само участници могат да добавят)
             if (!hasAccess)
             {
-                res.StatusCode = BusinessStatusCodeEnum.Unauthorized;
-                res.Message = "Само създателят на събитието може да добавя участници.";
-                return res;
+                response.StatusCode = BusinessStatusCodeEnum.Unauthorized;
+                response.Message = "Само създателят на събитието може да добавя участници.";
+                return response;
             }
 
             // нормализиране на входа
@@ -214,9 +228,9 @@ public class EventService : IEventService
 
             if (incoming.Count == 0)
             {
-                res.StatusCode = BusinessStatusCodeEnum.BadRequest;
-                res.Message = "Списъкът с потребители е празен.";
-                return res;
+                response.StatusCode = BusinessStatusCodeEnum.BadRequest;
+                response.Message = "Списъкът с потребители е празен.";
+                return response;
             }
 
             // 3) кои от тези потребители съществуват реално?
@@ -241,7 +255,7 @@ public class EventService : IEventService
             var newRows = toInsert.Select(uid => new EventParticipant
             {
                 EventId = req.EventId,
-                InviterId = actingUserId,
+                InviterId = req.ActorUserId,
                 InviteeId = uid,
                 inviteStatus = InviteStatus.Invited,
                 Id = Guid.NewGuid()
@@ -253,25 +267,22 @@ public class EventService : IEventService
                 await _context.SaveChangesAsync();
             }
 
-            res.Added = newRows.Count;
-            res.SkippedExisting = existingParticipantIds.Count;
-            res.SkippedMissingUsers = missingUsers.Count;
-            res.StatusCode = BusinessStatusCodeEnum.Success;
-            res.Message = "Участниците са обработени.";
-            return res;
+            response.Added = newRows.Count;
+            response.SkippedExisting = existingParticipantIds.Count;
+            response.SkippedMissingUsers = missingUsers.Count;
+            response.StatusCode = BusinessStatusCodeEnum.Success;
+            response.Message = "Участниците са обработени.";
         }
-        catch (DbUpdateException)
+
+        catch (Exception ex)
         {
-            res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
-            res.Message = "Грешка при запис в базата.";
-            return res;
+            _logger.LogError(ex, "Error  add Persons to event {Person}", req.UserIds);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+            response.Message = "Грешка при запис в базата.";
         }
-        catch
-        {
-            res.StatusCode = Messaging.BusinessStatusCodeEnum.InternalServerError;
-            res.Message = "Непредвидена грешка.";
-            return res;
-        }
+
+        return response;
+        
     }
 
 
@@ -296,7 +307,8 @@ public class EventService : IEventService
         // напр. публични, и в които участвам (Accepted) ако са Private но не еса архивирани
 
             q = q.Where(e => ((e.OwnerUserId == req.ActingUserId) || (e.Public)
-                  || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived)))
+                  || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId && p.inviteStatus == InviteStatus.Accepted)) 
+                  && ((e.eventStatus) != (EventStatus.Archived)))
                       ));
 
 
@@ -374,6 +386,7 @@ public class EventService : IEventService
                    || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived))) 
                        ));
 
+            bool joined = q.Any(e => e.Participants.Any(p => (p.InviteeId == req.ActingUserId) && (p.inviteStatus == InviteStatus.Accepted)));
 
 
             q.OrderByDescending(e => e.StartDate);
@@ -392,6 +405,7 @@ public class EventService : IEventService
                  StartDate = e.StartDate,
                  Public = e.Public,
                  Status = e.eventStatus,
+                 Joined = joined,
 
                  // само owner, ако ти трябва
                  Owner = new UserViewModel
@@ -475,6 +489,7 @@ public class EventService : IEventService
                      // само owner, ако ти трябва
                      Owner = new UserViewModel
                      {
+                         UserId = req.ActingUserId,
                          FirstName = e.OwnerUser.FirstName,
                          LastName = e.OwnerUser.LastName,
                          Email = e.OwnerUser.Email
@@ -504,85 +519,7 @@ public class EventService : IEventService
 
 
     
-   public async Task<GetEventsResponse> LoadMyEventsPraticipateAsync(GetEventsRequest req)
-    {
-        var response = new GetEventsResponse();
-
-        var page = req.Page < 1 ? 1 : req.Page;
-        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
-
-
-        try
-        {
-
-
-            var q = _context.Events
-                .AsNoTracking()
-                .AsQueryable();
-
-
-
-            q = q.Where(e =>  ((e.OwnerUserId == req.ActingUserId) 
-                   || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived)))
-                       ));
-
-            q.OrderByDescending(e => e.StartDate);
-
-            var total = await q.CountAsync();
-
-            var _event = await q
-             .Skip((req.Page - 1) * req.PageSize)
-             .Take(req.PageSize)
-             .Select(e => new EventViewModel
-             {
-                 Id = e.Id,
-                 Title = e.Title,
-                 Location = e.Location,
-                 Description = e.Description,
-                 StartDate = e.StartDate,
-                 Public = e.Public,
-                 Status = e.eventStatus,
-
-                 // само owner, ако ти трябва
-                 Owner = new UserViewModel
-                 {
-                     UserId = e.OwnerUserId,
-                     FirstName = e.OwnerUser.FirstName,
-                     LastName = e.OwnerUser.LastName,
-                     Email = e.OwnerUser.Email
-                 },
-                 ParticipantCount = e.Participants.Count(p => p.inviteStatus == InviteStatus.Accepted),
-
-             })
-             .ToListAsync();
-
-            if (_event == null)
-            {
-                response.StatusCode = BusinessStatusCodeEnum.NotFound;
-                return response;
-            }
-
-
-            response.Events = _event;
-            response.Total = total;
-            response.Page = req.Page;
-            response.PageSize = req.PageSize;
-            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
-            response.StatusCode = BusinessStatusCodeEnum.Success;
-
-
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching event for User {ActingUserId}", req.ActingUserId);
-            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
-        }
-
-
-        return response;
-
-    }
-
+ 
 
     public async Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId)
     {
@@ -592,6 +529,8 @@ public class EventService : IEventService
 
         try
         {
+          
+
             var _event = await _context.Events
                .AsNoTracking()
                .Where(e => e.Id == req.EventId)
@@ -618,7 +557,8 @@ public class EventService : IEventService
                         UserId = p.InviteeId,
                         FirstName = p.Invitee.FirstName,
                         LastName = p.Invitee.LastName,
-                        Email = p.Invitee.Email
+                        Email = p.Invitee.Email,
+                        Joined = p.inviteStatus == InviteStatus.Accepted
                     })
                     .ToList()
 
@@ -659,6 +599,89 @@ public class EventService : IEventService
     }
 
 
+    public async Task<GetEventsResponse> LoadMyEventsPraticipateAsync(GetEventsRequest req)
+    {
+        var response = new GetEventsResponse();
+
+        var page = req.Page < 1 ? 1 : req.Page;
+        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
+
+
+        try
+        {
+
+
+            var q = _context.Events
+                .AsNoTracking()
+                .AsQueryable();
+
+
+
+            q = q.Where(e => ((e.OwnerUserId == req.ActingUserId)
+                   || ((e.Participants.Any(p => (p.InviteeId == req.ActingUserId) 
+                   && (p.inviteStatus == InviteStatus.Accepted))) 
+                   && ((e.eventStatus) != (EventStatus.Archived)))
+                       ));
+
+            q.OrderByDescending(e => e.StartDate);
+
+            var total = await q.CountAsync();
+
+            bool joined = q.Any(e => e.Participants.Any(p => (p.InviteeId == req.ActingUserId) && (p.inviteStatus == InviteStatus.Accepted)));
+
+            var _event = await q
+             .Skip((req.Page - 1) * req.PageSize)
+             .Take(req.PageSize)
+             .Select(e => new EventViewModel
+            {
+                 Id = e.Id,
+                 Title = e.Title,
+                 Location = e.Location,
+                 Description = e.Description,
+                 StartDate = e.StartDate,
+                 Public = e.Public,
+                 Status = e.eventStatus,
+                 Joined = joined,
+
+                 // само owner, ако ти трябва
+                 Owner = new UserViewModel
+                 {
+                     UserId = e.OwnerUserId,
+                     FirstName = e.OwnerUser.FirstName,
+                     LastName = e.OwnerUser.LastName,
+                     Email = e.OwnerUser.Email
+                 },
+                 ParticipantCount = e.Participants.Count(p => p.inviteStatus == InviteStatus.Accepted),
+
+             })
+             .ToListAsync();
+            
+            if (_event == null)
+            {
+                response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                return response;
+            }
+
+
+            response.Events = _event;
+            response.Total = total;
+            response.Page = req.Page;
+            response.PageSize = req.PageSize;
+            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
+            response.StatusCode = BusinessStatusCodeEnum.Success;
+
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching event for User {ActingUserId}", req.ActingUserId);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+        }
+
+
+        return response;
+
+    }
 
 
 

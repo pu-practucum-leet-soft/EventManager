@@ -18,8 +18,9 @@ public class EventViewModel
     public string? Location { get; set; }
 
     public bool Public { get; set; }
+    public string? Email { get; set; }
 
-
+    public bool Joined  { get; set; }
     public UserViewModel Owner { get; set; }
 
     public EventStatus Status { get; set; }
@@ -27,4 +28,7 @@ public class EventViewModel
     public int? ParticipantCount {  get; set; }
 
     public ICollection<UserViewModel> Participants { get; set; } = new List<UserViewModel>();
+
+
+
 }
