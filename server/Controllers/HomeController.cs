@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using EventManager.AppServices.Interfaces;
+using EventManager.AppServices.Messaging.Responses.HomeResponses;
 
 namespace EventManager.Controllers
 {
@@ -7,17 +9,21 @@ namespace EventManager.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
+        private readonly IHomeService _service;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IHomeService service, ILogger<HomeController> logger)
         {
+            _service = service;
             _logger = logger;
         }
 
         [HttpGet]
         public IActionResult Index()
         {
-            return Ok("Welcome to the Event Manager API");
+            // TODO: Process the response from the service properly
+            // TODO: Replace with actual user ID from auth context
+            return _service.GetHome("test-user-id").Result is GetHomeResponse res ? Ok(res) : NotFound();
         }
     }
 }

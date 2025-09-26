@@ -29,7 +29,14 @@ namespace EventManager
             .AddEntityFrameworkStores<EventManagerDbContext>()
             .AddDefaultTokenProviders();
 
-            builder.Services.AddControllers();
+            builder.Services
+            .AddControllers()
+            // to prevent circular reference issues
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                options.JsonSerializerOptions.WriteIndented = true;
+             });
             builder.Services.AddEndpointsApiExplorer();
 
 
@@ -56,6 +63,7 @@ namespace EventManager
 
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddScoped<IHomeService, HomeService>();
 
             builder.Services.AddEndpointsApiExplorer();
 
@@ -86,10 +94,10 @@ namespace EventManager
                 app.UseHsts();
             }
 
+            app.UseCors(ClientAppPolicy);
             app.UseHttpsRedirection();
 
 
-            app.UseCors(ClientAppPolicy);
             
             app.UseAuthentication();
             app.UseAuthorization();

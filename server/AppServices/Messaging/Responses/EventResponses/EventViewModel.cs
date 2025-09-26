@@ -26,7 +26,7 @@ public class EventViewModel
 
     public EventStatus Status { get; set; }
 
-    public ICollection<EventParticipant> Participants { get; set; } = new List<EventParticipant>();
+    public ICollection<EventParticipant>? Participants { get; set; }
 }
 
 
