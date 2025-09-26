@@ -15,6 +15,8 @@ namespace EventManager.AppServices.Messaging.Responses.InvitesResponses
 
         public UserViewModel Invitee { get; set; }
 
+        public bool Join {  get; set; }
+
         public Data.Enums.InviteStatus InviteStatus { get; set; }
     }
 }

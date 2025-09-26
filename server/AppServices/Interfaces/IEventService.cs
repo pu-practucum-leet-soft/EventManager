@@ -11,6 +11,9 @@ public interface IEventService
     //Редактиране на евент
     Task<EditEventResponse> UpdateEventAsync(EditEventRequest req, Guid actingUserId, Guid IdEvent);
 
+
+    Task<EditEventResponse> StatusChangeEventAsync(EditEventRequest req, Guid actingUserId, Guid IdEvent);
+
     //Всички евенти
     Task<GetEventsResponse> LoadEventsAsync(GetEventsRequest req);
 
@@ -23,6 +26,10 @@ public interface IEventService
 
     // Филтри за търсене
     Task<GetEventsByTitleResponse> LoadEventsByTitleAsync(GetEventsByTitleRequests req);
+
+    Task<GetEventsByLocationResponse> LoadEventsByLocationAsync(GetEventsByLocationRequests req);
+
+    Task<GetEventsByDateResponse> LoadEventsByDateAsync(GetEventsByDateRequests req);
 
     Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId);
 

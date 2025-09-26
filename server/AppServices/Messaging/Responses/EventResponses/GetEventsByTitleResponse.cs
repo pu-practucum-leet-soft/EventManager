@@ -1,6 +1,4 @@
-﻿using EventManager.AppServices.Messaging.Responses.EventResponses;
-
-namespace EventManager.AppServices.Messaging.Requests.EventRequests
+﻿namespace EventManager.AppServices.Messaging.Responses.EventResponses
 {
     public class GetEventsByTitleResponse : ServiceResponseBase
     {

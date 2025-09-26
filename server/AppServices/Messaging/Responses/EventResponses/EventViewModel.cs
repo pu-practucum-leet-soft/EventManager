@@ -1,5 +1,7 @@
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using EventManager.Data.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace EventManager.AppServices.Messaging.Responses.EventResponses;
 
@@ -23,7 +25,8 @@ public class EventViewModel
     public bool Joined  { get; set; }
     public UserViewModel Owner { get; set; }
 
-    public EventStatus Status { get; set; }
+
+    public EventStatus Status {  get; set; }
 
     public int? ParticipantCount {  get; set; }
 

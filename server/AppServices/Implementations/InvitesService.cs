@@ -40,6 +40,7 @@ namespace EventManager.AppServices.Implementations
 
                 var items = await q
                     .OrderByDescending(p => p.Event.StartDate)
+                    .Where(p=> p.Event.eventStatus == EventStatus.Active)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(p => new InviteViewModel
@@ -51,15 +52,18 @@ namespace EventManager.AppServices.Implementations
                             UserId = p.InviterId,
                             FirstName = p.Inviter!.FirstName,
                             LastName = p.Inviter!.LastName,
-                            Email = p.Inviter!.Email
+                            Email = p.Inviter!.Email,
+                            Joined = p.inviteStatus == InviteStatus.Accepted
                         },
                         Invitee = new UserViewModel
                         {
                             UserId = p.InviteeId,
                             FirstName = p.Invitee!.FirstName,
                             LastName = p.Invitee!.LastName,
-                            Email = p.Invitee!.Email
+                            Email = p.Invitee!.Email,
+                            Joined = p.inviteStatus == InviteStatus.Accepted
                         },
+                        Join = InviteStatus.Accepted == p.inviteStatus,
                         InviteStatus = p.inviteStatus
                     })
                     .ToListAsync();
@@ -218,6 +222,7 @@ namespace EventManager.AppServices.Implementations
 
             return response;
         }
+
 
 
 

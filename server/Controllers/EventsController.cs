@@ -65,7 +65,31 @@ public class EventsController : ControllerBase
 
     }
 
+    [Authorize]
+    [HttpPatch("{id:guid}/status")]
+    [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SaveStatusChangeEventAsync([FromBody] EventModel _event, [FromRoute] Guid id)
 
+    {
+        // userId от токена
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(userIdStr, out var actingUserId))
+            return Unauthorized(new ServiceResponseError
+            {
+                StatusCode = BusinessStatusCodeEnum.Unauthorized,
+                Message = "Липсва валидна идентичност."
+            });
+
+        var res = await _service.StatusChangeEventAsync(new(_event), actingUserId, id);
+
+
+        return Ok(res);
+
+    }
 
 
 
@@ -96,7 +120,7 @@ public class EventsController : ControllerBase
     }
 
 
-    // GetEvents
+    // GetEvents - Title
     [Authorize]
     [HttpGet("by-title")]
     [ProducesResponseType(typeof(GetEventsByTitleResponse), StatusCodes.Status200OK)]
@@ -125,6 +149,72 @@ public class EventsController : ControllerBase
     }
 
 
+
+    // GetEvents - Title
+    [Authorize]
+    [HttpGet("by-date")]
+    [ProducesResponseType(typeof(GetEventsByDateResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetEventsByDateAsync(
+    [FromQuery] string date,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20)
+    {
+        var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(meStr, out var me);
+
+        DateTime.TryParse(date, out var DATE);
+
+
+        var req = new GetEventsByDateRequests
+        {
+            ActingUserId = me,
+            EventDate = DATE,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var res = await _service.LoadEventsByDateAsync(req);
+        return Ok(res);
+
+    }
+
+
+
+
+    [Authorize]
+    [HttpGet("by-location")]
+    [ProducesResponseType(typeof(GetEventsByLocationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetEventsByLocationAsync(
+    [FromQuery] string location,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20)
+    {
+        var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(meStr, out var me);
+
+        var req = new GetEventsByLocationRequests
+        {
+            ActingUserId = me,
+            EventLocation = location,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var res = await _service.LoadEventsByLocationAsync(req);
+        return Ok(res);
+
+    }
+
+
+
+
+    /// ///////////////////////////////////////////////////////////////////////////////////////
 
     // GetMyOwnedEvents
     [Authorize]
@@ -181,7 +271,7 @@ public class EventsController : ControllerBase
             PageSize = pageSize
         };
 
-        var res = await _service.LoadEventsAsync(req);
+        var res = await _service.LoadMyEventsPraticipateAsync(req);
         return Ok(res);
 
     }
@@ -245,49 +335,6 @@ public class EventsController : ControllerBase
         return Ok(res);
        
     }
-
-
-
-
-
-
-    /*
-    // GetAllEvents for owers
-    [HttpGet]
-    public IActionResult GetAll([FromQuery] Guid? ownerUserId)
-    {
-        var res = _service.GetAllEvents(new GetAllEventsRequest { OwnerUserId = ownerUserId });
-        return Ok(res);
-    }
-    */
-
-
-    /* [HttpGet("{id:guid}")]
-    public IActionResult GetEventById(Guid id)
-    {
-        var res = _service.GetEvent(new GetEventRequest { EventId = id });
-        return Ok(res);
-    }
-
-    [HttpPut("{id:guid}")]
-    [Authorize]
-    public IActionResult Edit(Guid id, [FromBody] EditEventRequest req)
-    {
-        req.EventId = id;
-        var res = _service.EditEvent(req);
-        return Ok(res);
-    }
-
-    [HttpPost("{id:guid}/participants")]
-    [Authorize]
-    public IActionResult AddParticipants(Guid id, [FromBody] AddParticipantsRequest req)
-    {
-        req.EventId = id;
-        var res = _service.AddParticipants(req);
-        return Ok(res);
-    }
-
-    */
 
 
 
