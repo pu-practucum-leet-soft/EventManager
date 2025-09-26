@@ -6,22 +6,14 @@ export interface IEventCardProps {
   title: string;
   location: string;
   startDate: string;
-  endDate: string;
 }
 
-const EventCard = ({
-  title,
-  location,
-  startDate,
-  endDate,
-}: IEventCardProps) => {
+const EventCard = ({ title, location, startDate }: IEventCardProps) => {
   return (
     <div className={styles.EventCard}>
       <span className={styles.Title}>{title}</span>
       <span>{location}</span>
-      <span>
-        {startDate} - {endDate}
-      </span>
+      <span>{new Date(startDate).toLocaleDateString()}</span>
       <Link to={`/events/${title}`}>
         <Button
           className={styles.ViewButton}

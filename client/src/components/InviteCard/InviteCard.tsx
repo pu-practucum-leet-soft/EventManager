@@ -4,21 +4,21 @@ export interface IInviteCardProps {
   eventId: string;
   eventTitle: string;
   inviterName: string;
-  date: string;
+  startDate: string;
 }
 
 const InviteCard: React.FC<IInviteCardProps> = ({
   eventId,
   eventTitle,
   inviterName,
-  date,
+  startDate,
 }) => {
   return (
     <div className={styles.InviteCard}>
       <h3 className={styles.EventTitle}>{eventTitle}</h3>
-      <span className={styles.Inviter}>From {inviterName}</span>
+      <span className={styles.Inviter}>From: {inviterName}</span>
       <span className={styles.Date}>
-        Date: {new Date(date).toLocaleDateString()}
+        {new Date(startDate).toLocaleDateString()}
       </span>
       <div className={styles.Actions}>
         <button className={styles.AcceptButton}>Accept</button>

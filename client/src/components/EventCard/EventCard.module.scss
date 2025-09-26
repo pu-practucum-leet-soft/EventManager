@@ -13,9 +13,13 @@
     // padding: 0.5em;
   }
   .Title {
-    font-size: $font-md;
+    font-size: $font-sm;
     font-weight: bold;
     flex-grow: 1;
+  }
+
+  span {
+    font-size: $font-sm;
   }
 
   .ViewButton {
