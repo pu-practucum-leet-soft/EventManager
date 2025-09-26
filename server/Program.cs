@@ -6,6 +6,9 @@ using EventManager.Data.Seeder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace EventManager
 {
@@ -15,16 +18,57 @@ namespace EventManager
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]);
+
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
             builder.Services.AddDbContext<EventManagerDbContext>(x =>
                 x.UseSqlServer(connectionString));
 
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+
+                // Това позволява да четем JWT от бисквитка
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (context.Request.Cookies.ContainsKey("jwt-token"))
+                        {
+                            context.Token = context.Request.Cookies["jwt-token"];
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            builder.Services.AddAuthorization();
+
             builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
             {
-                options.Password.RequireDigit = true;
+                options.Password.RequireDigit = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 4;
+
+                options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<EventManagerDbContext>()
             .AddDefaultTokenProviders();
@@ -64,8 +108,10 @@ namespace EventManager
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
             builder.Services.AddScoped<IHomeService, HomeService>();
+            builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddHttpContextAccessor();
 
             var ClientAppPolicy = "ClientAppPolicy";
 
@@ -98,7 +144,7 @@ namespace EventManager
             app.UseHttpsRedirection();
 
 
-            
+
             app.UseAuthentication();
             app.UseAuthorization();
 
