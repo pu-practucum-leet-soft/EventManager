@@ -58,9 +58,9 @@ namespace EventManager.Migrations
                 {
                     EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     InviteeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     InviterId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    inviteStatus = table.Column<int>(type: "int", nullable: false)
+                    inviteStatus = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {

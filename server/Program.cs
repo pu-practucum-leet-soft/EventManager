@@ -33,6 +33,20 @@ namespace EventManager
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(key)
                     };
+                         /*  
+                          *  // ВАЖНО: Чети токена от cookie!
+                            options.Events = new JwtBearerEvents
+                            {
+                                OnMessageReceived = context =>
+                                {
+                                    if (context.Request.Cookies.ContainsKey("jwt"))
+                                    {
+                                        context.Token = context.Request.Cookies["jwt"];
+                                    }
+                                    return Task.CompletedTask;
+                                }
+                            };
+                         */
                 });
 
             // DB
@@ -50,6 +64,20 @@ namespace EventManager
 
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddScoped<IInvitesService, InvitesService>();
+
+
+            var corsPolicy = "_client";
+            builder.Services.AddCors(o =>
+            {
+                o.AddPolicy(corsPolicy, p =>
+                    p.WithOrigins("http://localhost:5173")
+                     .AllowAnyHeader()
+                     .AllowAnyMethod()
+                     .AllowCredentials());
+            });
+
+
 
             var app = builder.Build();
 
@@ -66,7 +94,9 @@ namespace EventManager
 
             app.UseRouting();
 
-            app.UseAuthentication(); 
+            app.UseCors("_client");
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

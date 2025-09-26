@@ -18,20 +18,20 @@ namespace EventManager.AppServices.Implementations
         private readonly EventManagerDbContext _context;
         private readonly ILogger<InvitesService> _logger;
 
-        public InvitesService(ILogger<InvitesService> logger, EventManagerDbContext context)
+        public InvitesService(EventManagerDbContext db, ILogger<InvitesService> logger)
         {
             _logger = logger;
-            _context = context;
+            _context = db;
         }
         public async Task<GetInvitesIncomingResponse> LoadInvitesIncomingAsync(GetInvitesIncomingRequest req)
         {
             var response = new GetInvitesIncomingResponse();
-
+            
             try
             {
                 var q = _context.EventParticipants
                     .AsNoTracking()
-                    .Where(p => p.InviteeId == req.ActingUserId); // входящи покани
+                    .Where(p => p.InviteeId == req.ActingUserId && p.inviteStatus == InviteStatus.Invited); // входящи покани
 
                 var page = req.Page < 1 ? 1 : req.Page;
                 var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
@@ -147,11 +147,12 @@ namespace EventManager.AppServices.Implementations
             try
             {
                 var invite = await _context.EventParticipants
-                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.InviteeId == actingUserId);
+                    .FirstOrDefaultAsync(p => (p.EventId == eventId) && (p.InviteeId == actingUserId));
 
                 if (invite == null)
                 {
                     response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                    response.Message = ""+ actingUserId + " -------------- "+eventId;
                     return response;
                 }
 

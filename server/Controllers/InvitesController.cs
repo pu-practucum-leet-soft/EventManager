@@ -16,19 +16,19 @@ namespace EventManager.Controllers
     public class InvitesController : ControllerBase
     {
 
-        private readonly InvitesService _service;
-
-        public InvitesController(InvitesService service) => _service = service;
+        private readonly IInvitesService _service;
+        public InvitesController(IInvitesService service) => _service = service;
 
 
         [Authorize]
         [HttpGet("incoming")]
-        [ProducesResponseType(typeof(CreateEventResponse), StatusCodes.Status200OK)]
+       [ProducesResponseType(typeof(GetInvitesIncomingResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetIncomingAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            
             var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(meStr, out var me)) return Unauthorized();
 
@@ -37,7 +37,7 @@ namespace EventManager.Controllers
                 ActingUserId = me,
                 Page = page,
                 PageSize = pageSize
-            });
+            }); 
 
             return Ok(res);
         }
@@ -70,7 +70,7 @@ namespace EventManager.Controllers
         
         
         [Authorize]
-        [HttpPost("{id:guid}/accept")]
+        [HttpPost("{eventId:guid}/accept")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

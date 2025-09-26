@@ -22,10 +22,16 @@ public interface IEventService
 
 
     // Филтри за търсене
-    Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId, bool isAdmin);
+    Task<GetEventsByTitleResponse> LoadEventsByTitleAsync(GetEventsByTitleRequests req);
+
+    Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId);
+
+    
     Task<GetEventsResponse> LoadMyOwnedEventsAsync(GetEventsRequest req);
 
     Task<GetEventsResponse> LoadMyEventsPraticipateAsync(GetEventsRequest req);
+
+   
 
     //EventViewModel GetEvent(GetEventRequest req);
     //EditEventResponse EditEvent(EditEventRequest req);

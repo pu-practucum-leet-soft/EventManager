@@ -82,7 +82,6 @@ public class EventsController : ControllerBase
     {
         var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         Guid.TryParse(meStr, out var me);
-        var isAdmin = User.IsInRole("admin");
 
         var req = new GetEventsRequest
         {
@@ -97,9 +96,39 @@ public class EventsController : ControllerBase
     }
 
 
+    // GetEvents
+    [Authorize]
+    [HttpGet("title")]
+    [ProducesResponseType(typeof(GetEventsByTitleResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetEventsByTitleAsync(
+    [FromQuery] string title,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20)
+    {
+        var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(meStr, out var me);
+        
+        var req = new GetEventsByTitleRequests
+        {
+            ActingUserId = me,
+            EventTitle = title,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var res = await _service.LoadEventsByTitleAsync(req); 
+        return Ok(res);
+
+    }
+
+
+
     // GetMyOwnedEvents
     [Authorize]
-    [HttpGet]
+    [HttpGet("my-events")]
     [ProducesResponseType(typeof(GetEventsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -110,12 +139,12 @@ public class EventsController : ControllerBase
     [FromQuery] int pageSize = 20)
     {
         var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Guid.TryParse(meStr, out var me);
+        if (!Guid.TryParse(meStr, out var me)) return Unauthorized();
 
         var req = new GetEventsRequest
         {
             Owned = owned,
-            ActingUserId= me,
+            ActingUserId = me,
             Page = page,
             PageSize = pageSize
         };
@@ -126,9 +155,12 @@ public class EventsController : ControllerBase
     }
 
 
+
+
+
     // GetMyEventsPraticipate
     [Authorize]
-    [HttpGet]
+    [HttpGet("invited")]
     [ProducesResponseType(typeof(GetEventsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -139,7 +171,7 @@ public class EventsController : ControllerBase
     [FromQuery] int pageSize = 20)
     {
         var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Guid.TryParse(meStr, out var me);
+        if (!Guid.TryParse(meStr, out var me)) return Unauthorized();
 
         var req = new GetEventsRequest
         {
@@ -154,6 +186,7 @@ public class EventsController : ControllerBase
 
     }
 
+    
 
     // GetEventById
     [Authorize]
@@ -170,10 +203,8 @@ public class EventsController : ControllerBase
         if (!Guid.TryParse(meStr, out var me))
             return Unauthorized();
 
-        var isAdmin = User.IsInRole("admin");
 
-
-            var res = await _service.LoadEventByIdAsync(new GetEventByIdRequest(id), me, isAdmin);
+            var res = await _service.LoadEventByIdAsync(new GetEventByIdRequest(id), me);
             return Ok(res);
     }
 

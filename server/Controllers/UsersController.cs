@@ -24,7 +24,7 @@ namespace EventManager.Controllers
         /// <summary>
         /// Създаване на нов потребител
         /// </summary>
-        [HttpPost]
+        [HttpPost("register")]
         [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
@@ -43,13 +43,14 @@ namespace EventManager.Controllers
             return Ok(response);
         }
 
-        [HttpPost("login")]
-        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
+            [HttpPost("login")]
+            [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+            public async Task<IActionResult> Login([FromBody] LoginRequest request)
+            {
+                var loginResponse = await _service.LoginAsync(request);
 
-            return Ok(await _service.LoginAsync(request));
-        }
+                return Ok(loginResponse);
+            }
 
         [Authorize]
         [HttpGet("me")]

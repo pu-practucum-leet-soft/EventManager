@@ -6,10 +6,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace EventManager.Data.Entities;
 
 
-public class EventParticipant
+public class EventParticipant : BaseEntity
 {
-    [Key]
-    public Guid Id { get; set; }
 
     [Required]
     public Guid EventId { get; set; }

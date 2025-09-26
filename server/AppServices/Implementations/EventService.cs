@@ -1,4 +1,5 @@
-﻿using EventManager.AppServices.Interfaces;
+﻿using Azure;
+using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
@@ -8,7 +9,9 @@ using EventManager.Data.Entities;
 using EventManager.Data.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.ComponentModel.Design;
 using System.Security.Claims;
 
@@ -72,7 +75,7 @@ public class EventService : IEventService
 
             // owner auto-joins
             await _context.EventParticipants.AddAsync(
-                new EventParticipant { EventId = ev.Id, InviterId = ownerId, InviteeId = ownerId, inviteStatus = InviteStatus.Accepted });
+                new EventParticipant { EventId = ev.Id, InviterId = ownerId, InviteeId = ownerId, inviteStatus = InviteStatus.Accepted, Id = Guid.NewGuid() });
 
             await _context.SaveChangesAsync();
 
@@ -240,7 +243,8 @@ public class EventService : IEventService
                 EventId = req.EventId,
                 InviterId = actingUserId,
                 InviteeId = uid,
-                inviteStatus = InviteStatus.Invited
+                inviteStatus = InviteStatus.Invited,
+                Id = Guid.NewGuid()
             }).ToList();
 
             if (newRows.Count > 0)
@@ -274,6 +278,16 @@ public class EventService : IEventService
 
     public async Task<GetEventsResponse> LoadEventsAsync(GetEventsRequest req)
     {
+
+        var response = new GetEventsResponse();
+
+        var page = req.Page < 1 ? 1 : req.Page;
+        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
+
+
+        try
+        { 
+
         var q = _context.Events
             .AsNoTracking()
             .AsQueryable();
@@ -281,9 +295,9 @@ public class EventService : IEventService
         //„всички“
         // напр. публични, и в които участвам (Accepted) ако са Private
         q = q.Where(e =>
-            e.Public == true 
+            e.Public == true
             || e.Participants.Any(p => p.InviteeId == req.ActingUserId));
-        
+
 
 
 
@@ -308,6 +322,7 @@ public class EventService : IEventService
                  // само owner, ако ти трябва
                  Owner = new UserViewModel
                  {
+                     UserId = e.Id,
                      FirstName = e.OwnerUser.FirstName,
                      LastName = e.OwnerUser.LastName,
                      Email = e.OwnerUser.Email
@@ -317,85 +332,206 @@ public class EventService : IEventService
              })
              .ToListAsync();
 
-        return new GetEventsResponse
-        {
-            Events = items,
-            Total = total,
-            Page = req.Page,
-            PageSize = req.PageSize,
-            Message = total == 0 ? "Нямате събития." : "Страница: "+ req.Page
-        };
+            response.Events = items;
+            response.Total = total;
+            response.Page = req.Page;
+            response.PageSize = req.PageSize;
+            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
+
+
     }
+         catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching event {ActingUserId}", req.ActingUserId);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+        }
+
+        return response;
+    }
+
+
+    public async Task<GetEventsByTitleResponse> LoadEventsByTitleAsync(GetEventsByTitleRequests req)
+    {
+        var response = new GetEventsByTitleResponse();
+
+        var page = req.Page < 1 ? 1 : req.Page;
+        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
+
+
+    
+
+        try
+        {
+
+           
+            var q = _context.Events
+                .AsNoTracking()
+                .AsQueryable();
+
+
+
+            q = q.Where(e => (e.Title == req.EventTitle) &&
+                   ( ((e.OwnerUserId == req.ActingUserId) || (e.Public))
+                   || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived))) 
+                       ));
+
+
+
+            q.OrderByDescending(e => e.StartDate);
+
+            var total = await q.CountAsync();
+
+            var _event = await q
+             .Skip((req.Page - 1) * req.PageSize)
+             .Take(req.PageSize)
+             .Select(e => new EventViewModel
+             {
+                 Id = e.Id,
+                 Title = e.Title,
+                 Location = e.Location,
+                 Description = e.Description,
+                 StartDate = e.StartDate,
+                 Public = e.Public,
+                 Status = e.eventStatus,
+
+                 // само owner, ако ти трябва
+                 Owner = new UserViewModel
+                 {
+                     UserId = e.OwnerUserId,
+                     FirstName = e.OwnerUser.FirstName,
+                     LastName = e.OwnerUser.LastName,
+                     Email = e.OwnerUser.Email
+                 },
+                 ParticipantCount = e.Participants.Count(p => p.inviteStatus == InviteStatus.Accepted),
+
+             })
+             .ToListAsync();
+
+            if (_event == null)
+            {
+                response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                return response;
+            }
+
+
+
+            response.Events = _event;
+            response.Total = total;
+            response.Page = req.Page;
+            response.PageSize = req.PageSize;
+            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
+            response.StatusCode = BusinessStatusCodeEnum.Success;
+
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching event {EvensTitle}", req.EventTitle);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+        }
+
+
+        return response;
+
+    }
+
+
+
 
     public async Task<GetEventsResponse> LoadMyOwnedEventsAsync(GetEventsRequest req)
     {
-        var q = _context.Events
-            .AsNoTracking()
-            .AsQueryable();
+        var page = req.Page < 1 ? 1 : req.Page;
+        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
 
-        // Мойте събития
-
-        q = q.Where(e => e.OwnerUserId == req.ActingUserId);
-
-        q = q.OrderByDescending(e => e.StartDate);
-
-        var total = await q.CountAsync();
-
-
-        var items = await q
-             .Skip((req.Page - 1) * req.PageSize)
-             .Take(req.PageSize)
-             .Select(e => new EventViewModel
-             {
-                 Id = e.Id,
-                 Title = e.Title,
-                 Location = e.Location,
-                 Description = e.Description,
-                 StartDate = e.StartDate,
-                 Public = e.Public,
-                 Status = e.eventStatus,
-
-                 // само owner, ако ти трябва
-                 Owner = new UserViewModel
-                 {
-                     FirstName = e.OwnerUser.FirstName,
-                     LastName = e.OwnerUser.LastName,
-                     Email = e.OwnerUser.Email
-                 },
-                 ParticipantCount = e.Participants.Count(p => p.inviteStatus == InviteStatus.Accepted),
-
-             })
-             .ToListAsync();
-
-        return new GetEventsResponse
+        var response = new GetEventsResponse();
+        try
         {
-            Events = items,
-            Total = total,
-            Page = req.Page,
-            PageSize = req.PageSize,
-            Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page
-        };
+            var q = _context.Events
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Мойте събития
+
+            q = q.Where(e => e.OwnerUserId == req.ActingUserId);
+
+
+            q = q.OrderByDescending(e => e.StartDate);
+
+            var total = await q.CountAsync();
+
+
+            var items = await q
+                 .Skip((req.Page - 1) * req.PageSize)
+                 .Take(req.PageSize)
+                 .Select(e => new EventViewModel
+                 {
+                     Id = e.Id,
+                     Title = e.Title,
+                     Location = e.Location,
+                     Description = e.Description,
+                     StartDate = e.StartDate,
+                     Public = e.Public,
+                     Status = e.eventStatus,
+
+                     // само owner, ако ти трябва
+                     Owner = new UserViewModel
+                     {
+                         FirstName = e.OwnerUser.FirstName,
+                         LastName = e.OwnerUser.LastName,
+                         Email = e.OwnerUser.Email
+                     },
+                     ParticipantCount = e.Participants.Count(p => p.inviteStatus == InviteStatus.Accepted),
+
+                 })
+                 .ToListAsync();
+
+
+            response.Events = items;
+            response.Total = total;
+            response.Page = req.Page;
+            response.PageSize = req.PageSize;
+            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
+           
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching event {ActingUserId}", req.ActingUserId);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+        }
+
+        return response;
     }
 
-    public async Task<GetEventsResponse> LoadMyEventsPraticipateAsync(GetEventsRequest req)
+
+    
+   public async Task<GetEventsResponse> LoadMyEventsPraticipateAsync(GetEventsRequest req)
     {
-        var q = _context.Events
-            .AsNoTracking()
-            .AsQueryable();
+        var response = new GetEventsResponse();
+
+        var page = req.Page < 1 ? 1 : req.Page;
+        var pageSize = req.PageSize < 1 ? 20 : req.PageSize;
 
 
-            // само евенти, където аз участвам и съм ПРИЕЛ
-            q = q.Where(e => e.Participants
-                .Any(p => p.InviteeId == req.ActingUserId
-                       && p.inviteStatus == InviteStatus.Accepted));
+        try
+        {
 
 
-        q = q.OrderByDescending(e => e.StartDate);
+            var q = _context.Events
+                .AsNoTracking()
+                .AsQueryable();
 
-        var total = await q.CountAsync();
 
 
-        var items = await q
+            q = q.Where(e =>  ((e.OwnerUserId == req.ActingUserId) 
+                   || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived)))
+                       ));
+
+            q.OrderByDescending(e => e.StartDate);
+
+            var total = await q.CountAsync();
+
+            var _event = await q
              .Skip((req.Page - 1) * req.PageSize)
              .Take(req.PageSize)
              .Select(e => new EventViewModel
@@ -411,6 +547,7 @@ public class EventService : IEventService
                  // само owner, ако ти трябва
                  Owner = new UserViewModel
                  {
+                     UserId = e.OwnerUserId,
                      FirstName = e.OwnerUser.FirstName,
                      LastName = e.OwnerUser.LastName,
                      Email = e.OwnerUser.Email
@@ -420,18 +557,35 @@ public class EventService : IEventService
              })
              .ToListAsync();
 
-        return new GetEventsResponse
+            if (_event == null)
+            {
+                response.StatusCode = BusinessStatusCodeEnum.NotFound;
+                return response;
+            }
+
+
+            response.Events = _event;
+            response.Total = total;
+            response.Page = req.Page;
+            response.PageSize = req.PageSize;
+            response.Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page;
+            response.StatusCode = BusinessStatusCodeEnum.Success;
+
+
+        }
+        catch (Exception ex)
         {
-            Events = items,
-            Total = total,
-            Page = req.Page,
-            PageSize = req.PageSize,
-            Message = total == 0 ? "Нямате събития." : "Страница: " + req.Page
-        };
+            _logger.LogError(ex, "Error fetching event for User {ActingUserId}", req.ActingUserId);
+            response.StatusCode = BusinessStatusCodeEnum.InternalServerError;
+        }
+
+
+        return response;
+
     }
 
 
-    public async Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId, bool isAdmin)
+    public async Task<GetEventByIdResponse> LoadEventByIdAsync(GetEventByIdRequest req, Guid actingUserId)
     {
 
        
@@ -480,12 +634,10 @@ public class EventService : IEventService
 
 
             // по подразбиране: нямаш достъп
-            var hasAccess =
-                isAdmin                                   // 1) ако си админ
-                || _event.Owner.UserId == actingUserId    // 2) ако си собственик
-                || _event.Public                          // 3) ако е публичен
-                || _event.Participants.Any(p => p.UserId == actingUserId); // 4) ако участваш
-
+            var hasAccess =                                 // -) ако си админ bool admin 
+                _event.Owner.UserId == actingUserId    // 1) ако си собственик
+                || _event.Public                        // 2) ако е публичен
+                ||(( _event.Status != EventStatus.Archived)&& (_event.Participants.Any(p => p.UserId == actingUserId))); // 3) ако участваш    
 
             if (!hasAccess)
             {
