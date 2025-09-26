@@ -293,15 +293,14 @@ public class EventService : IEventService
             .AsQueryable();
 
         //„всички“
-        // напр. публични, и в които участвам (Accepted) ако са Private
-        q = q.Where(e =>
-            e.Public == true
-            || e.Participants.Any(p => p.InviteeId == req.ActingUserId));
+        // напр. публични, и в които участвам (Accepted) ако са Private но не еса архивирани
+
+            q = q.Where(e => ((e.OwnerUserId == req.ActingUserId) || (e.Public)
+                  || ((e.Participants.Any(p => p.InviteeId == req.ActingUserId)) && ((e.eventStatus) != (EventStatus.Archived)))
+                      ));
 
 
-
-
-        q = q.OrderByDescending(e => e.StartDate);
+            q = q.OrderByDescending(e => e.StartDate);
 
         var total = await q.CountAsync();
 
