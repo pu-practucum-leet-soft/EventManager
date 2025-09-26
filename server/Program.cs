@@ -3,11 +3,12 @@ using EventManager.AppServices.Interfaces;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
 using EventManager.Data.Seeder;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 namespace EventManager
@@ -31,6 +32,11 @@ namespace EventManager
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+             {
+                 options.LoginPath = "api/Users/login";
+                 options.AccessDeniedPath = "/api/home/index";
+             })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
