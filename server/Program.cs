@@ -3,7 +3,6 @@ using EventManager.AppServices.Interfaces;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
 using EventManager.Data.Seeder;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +19,7 @@ namespace EventManager
             var builder = WebApplication.CreateBuilder(args);
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -32,52 +31,47 @@ namespace EventManager
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-             {
-                 options.LoginPath = "api/Users/login";
-                 options.AccessDeniedPath = "/api/home/index";
-             })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
-
-                // Това позволява да четем JWT от бисквитка
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
+                    options.SaveToken = false; // няма смисъл да пазим в контекст
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        if (context.Request.Cookies.ContainsKey("jwt-token"))
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
+                        IssuerSigningKey = key,
+                        ClockSkew = TimeSpan.FromSeconds(30) // по-строг гратис
+                    };
+
+                    // сигнализирай фронтенда за изтекъл токен
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = ctx =>
                         {
-                            context.Token = context.Request.Cookies["jwt-token"];
+                            if (ctx.Exception is SecurityTokenExpiredException)
+                                ctx.Response.Headers["Token-Expired"] = "true";
+                            return Task.CompletedTask;
                         }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
+                    };
+                });
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
-            {
-                options.Password.RequireDigit = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 4;
-
-                options.User.RequireUniqueEmail = true;
-            })
-            .AddEntityFrameworkStores<EventManagerDbContext>()
-            .AddDefaultTokenProviders();
+            builder.Services
+                .AddIdentityCore<User>(opt =>
+                {
+                    opt.Password.RequireDigit = false;
+                    opt.Password.RequireUppercase = false;
+                    opt.Password.RequireNonAlphanumeric = false;
+                    opt.Password.RequiredLength = 4;
+                    opt.User.RequireUniqueEmail = true;
+                })
+                .AddRoles<IdentityRole<Guid>>()
+                .AddEntityFrameworkStores<EventManagerDbContext>()
+                .AddDefaultTokenProviders();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -102,13 +96,28 @@ namespace EventManager
                         Url = new Uri("https://example.com/license")
                     }
                 });
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme { Reference = new OpenApiReference {
+                            Type = ReferenceType.SecurityScheme, Id = "Bearer" }}, new string[] {}
+                    }
+                });
             });
 
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
             builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
-            builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddHttpContextAccessor();
 
             var ClientAppPolicy = "ClientAppPolicy";
@@ -139,7 +148,6 @@ namespace EventManager
             }
 
             app.UseHttpsRedirection();
-
 
             app.UseCors(ClientAppPolicy);
 

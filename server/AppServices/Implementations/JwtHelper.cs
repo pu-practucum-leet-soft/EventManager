@@ -1,7 +1,7 @@
-﻿using EventManager.AppServices.Implementations;
-using EventManager.AppServices.Interfaces;
+﻿using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
+using EventManager.AppServices.Messaging.Requests.UserRequests;
 using EventManager.Data.Contexts;
 using EventManager.Data.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -78,7 +78,7 @@ namespace EventManager.AppServices.Implementations
             };
         }
 
-        public async Task<RefreshTokenResponse> RenewRefreshToken()
+        public async Task<RefreshTokenResponse> RenewRefreshToken(RefreshRequest req)
         {
             var response = new RefreshTokenResponse();
             var http = _httpContextAccessor.HttpContext;
@@ -126,14 +126,14 @@ namespace EventManager.AppServices.Implementations
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = jwt.TokenExpiryTime
             });
             http.Response.Cookies.Append("refresh-token", newRefreshToken.Token, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = newRefreshToken.Expires
             });
 
