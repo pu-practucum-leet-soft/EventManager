@@ -3,8 +3,10 @@ using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.UserRequests;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using RefreshRequest = EventManager.AppServices.Messaging.Requests.UserRequests.RefreshRequest;
 
 namespace EventManager.Controllers
 {
@@ -47,17 +49,24 @@ namespace EventManager.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] AppServices.Messaging.Requests.UserRequests.LoginRequest request)
         {
             var res = await _service.LoginAsync(request);
-            return res.StatusCode == BusinessStatusCodeEnum.Success ? Ok(res) : Unauthorized(res);
+            if (res.StatusCode != BusinessStatusCodeEnum.Success) return Unauthorized(res);
+
+            return Ok(new
+            {
+                token = res.Token,
+                expiresAt = res.TokenExpiryTime,
+                user = new { res.UserName, res.Email, res.Role }
+            });
         }
 
         [HttpPost("refresh")]
         [AllowAnonymous]
-        public async Task<IActionResult> Refresh() // чете refresh cookie вътре в service
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
         {
-            var res = await _jwtHelper.RenewRefreshToken();
+            var res = await _jwtHelper.RenewRefreshToken(req);
             return res.StatusCode == BusinessStatusCodeEnum.Success ? Ok(res) : Unauthorized(res);
         }
 
@@ -68,8 +77,8 @@ namespace EventManager.Controllers
             return Ok();
         }
 
-        [Authorize]
         [HttpGet("me")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public IActionResult GetProfile()
@@ -102,25 +111,25 @@ namespace EventManager.Controllers
             }
         }
 
-        [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken()
-        {
-            var refreshToken = Request.Cookies["refresh-token"];
-            if (refreshToken == null) return Unauthorized();
-            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        //[HttpPost("refresh-token")]
+        //public async Task<IActionResult> RefreshToken()
+        //{
+        //    var refreshToken = Request.Cookies["refresh-token"];
+        //    if (refreshToken == null) return Unauthorized();
+        //    var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            var refreshTokenRenual = await _jwtHelper.RenewRefreshToken();
-            // върни новото cookie
-            Response.Cookies.Append("refresh-token", refreshTokenRenual.Token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = refreshTokenRenual.TokenExpiryTime
-            });
+        //    var refreshTokenRenual = await _jwtHelper.RenewRefreshToken();
+        //    // върни новото cookie
+        //    Response.Cookies.Append("refresh-token", refreshTokenRenual.Token, new CookieOptions
+        //    {
+        //        HttpOnly = true,
+        //        Secure = true,
+        //        SameSite = SameSiteMode.Strict,
+        //        Expires = refreshTokenRenual.TokenExpiryTime
+        //    });
 
-            return Ok(new { token = refreshTokenRenual });
-        }
+        //    return Ok(new { token = refreshTokenRenual });
+        //}
 
     }
 }

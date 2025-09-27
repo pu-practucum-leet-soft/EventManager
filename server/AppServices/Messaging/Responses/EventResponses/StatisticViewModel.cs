@@ -17,6 +17,8 @@
     {
         [Required]
         public Guid EventId { get; set; }
+
+        public EventViewModel Envent { get; set; }  
         [Required]
         public int AcceptedInvitesCount { get; set; }
 

@@ -133,7 +133,7 @@ namespace EventManager.AppServices.Implementations
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = jwt.TokenExpiryTime
             });
 
@@ -141,7 +141,7 @@ namespace EventManager.AppServices.Implementations
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = refresh.Expires
             });
 
