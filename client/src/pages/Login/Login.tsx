@@ -1,14 +1,26 @@
-import Section from "@components/UI/Section";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 
-import styles from "./Login.module.scss";
-import { Link } from "react-router";
+import config from "@config";
+import userQueries from "@queries/api/userQueries";
+
+import Section from "@components/UI/Section";
 import Button from "@components/UI/Button/Button";
+import styles from "./Login.module.scss";
 
 const LoginPage = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Handle login logic here
-    alert("Login functionality is not implemented yet.");
+    const res = await userQueries.login({ email, password });
+
+    console.log(res.data);
+
+    navigate(config.routes.home);
   };
 
   return (
@@ -17,11 +29,23 @@ const LoginPage = () => {
         <form className={styles.Form} onSubmit={handleSubmit}>
           <div className={styles.FormGroup}>
             <label htmlFor="username">Username</label>
-            <input type="text" id="username" name="username" />
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className={styles.FormGroup}>
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" />
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <div className={styles.Actions}>
             <Link to="/register">
