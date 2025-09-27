@@ -16,6 +16,7 @@ const HomePage = () => {
 
       return res.data;
     },
+    retry: false,
   });
 
   if (isLoading) {

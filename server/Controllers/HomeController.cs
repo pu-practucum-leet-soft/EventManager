@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging.Responses.HomeResponses;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EventManager.Controllers
 {
@@ -19,6 +20,7 @@ namespace EventManager.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public IActionResult Index()
         {
             // TODO: Process the response from the service properly

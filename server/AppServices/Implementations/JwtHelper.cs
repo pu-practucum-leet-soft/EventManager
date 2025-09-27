@@ -48,9 +48,9 @@ namespace EventManager.AppServices.Implementations
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email!),
-                new Claim(ClaimTypes.Role, userRole),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+                new Claim("Role", userRole),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             };
@@ -141,6 +141,7 @@ namespace EventManager.AppServices.Implementations
             {
                 Message = "Токенът беше обновен успешно.",
                 StatusCode = BusinessStatusCodeEnum.Success,
+                Token = jwt.Token,
                 TokenExpiryTime = newRefreshToken.Expires
             };
         }

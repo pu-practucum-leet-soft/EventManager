@@ -15,6 +15,17 @@ const userQueries = {
 
     return response;
   },
+  logout: async () => {
+    const response = await axios.post(`${BASE_URL}/logout`, {});
+    return response;
+  },
+  refresh: async () => {
+    const response = await axios.post<LoginResponse>(`${BASE_URL}/refresh`, {
+      withCredentials: true,
+    });
+
+    return response;
+  },
 };
 
 export default userQueries;

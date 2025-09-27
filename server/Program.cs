@@ -135,7 +135,7 @@ namespace EventManager
                 options.AddPolicy(name: ClientAppPolicy,
                       builder =>
                       {
-                          builder.WithOrigins("http://localhost:5173") // TODO: extract frontend URL to config file or environment variable
+                          builder.WithOrigins("https://localhost:5173") // TODO: extract frontend URL to config file or environment variable
                                  .AllowAnyHeader()
                                  .AllowAnyMethod()
                                  .AllowCredentials();
