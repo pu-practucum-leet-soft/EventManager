@@ -127,6 +127,16 @@ namespace EventManager.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            // изтриваме cookie-то
+            Response.Cookies.Delete("jwt");
+
+            return Ok(new { message = "Успешно излизане." });
+        }
+
 
         [HttpGet("ping")]
         public IActionResult Ping()
