@@ -1,42 +1,52 @@
 import Section from "@components/UI/Section";
-import styles from "./AddEvent.module.scss";
+import styles from "./EditEvent.module.scss";
 import Button from "@components/UI/Button";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import eventQueries, { eventCacheTags } from "@queries/api/eventQueries";
 import { useAppDispatch } from "@redux/store";
 import { closeModal } from "@redux/slices/modalSlice";
 
-const AddEventModal = () => {
+type EditEventModalProps = {
+  eventId: string;
+  initialData: {
+    title: string;
+    startDate: string;
+    location: string;
+    description: string;
+  };
+};
+
+const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
+  console.log(initialData);
   const [eventData, setEventData] = useState({
-    title: "",
-    date: "",
-    location: "",
-    description: "",
+    title: initialData.title,
+    startDate: initialData.startDate,
+    location: initialData.location,
+    description: initialData.description,
   });
 
-  const addMutate = useMutation({
-    mutationKey: ["addEvent"],
-    mutationFn: async (newEvent: {
+  const editMutate = useMutation({
+    mutationKey: ["editEvent"],
+    mutationFn: async (updatedEvent: {
+      eventId: string;
       name: string;
       description: string;
       location: string;
       startDate: string;
     }) => {
-      // Call the API to add the event
-      return await eventQueries.addEvent(newEvent);
+      return await eventQueries.editEvent(updatedEvent);
     },
     onSuccess: (data) => {
       console.log(data);
-      // Handle success (e.g., close modal, show success message, refresh event list)
       queryClient.invalidateQueries({ queryKey: [eventCacheTags.index] });
       dispatch(closeModal());
     },
     onError: (error) => {
       // Handle error (e.g., show error message)
-      console.error("Error adding event:", error);
+      console.error("Error editing event:", error);
     },
   });
 
@@ -44,18 +54,19 @@ const AddEventModal = () => {
     e.preventDefault();
 
     // console.log("Event Data:", eventData);
-    addMutate.mutate({
+    editMutate.mutate({
+      eventId: eventId,
       name: eventData.title,
       description: eventData.description,
       location: eventData.location,
-      startDate: eventData.date,
+      startDate: eventData.startDate,
     });
   };
-
+  const testDate = new Date(eventData.startDate).toISOString().split("T")[0];
   return (
-    <div className={styles.AddEventModal}>
-      <Section title="Add New Event">
-        <form className={styles.AddEventForm} onSubmit={handleSubmit}>
+    <div className={styles.EditEventModal}>
+      <Section title="Edit Event">
+        <form className={styles.EditEventForm} onSubmit={handleSubmit}>
           <input
             type="text"
             placeholder="Event Title"
@@ -66,10 +77,10 @@ const AddEventModal = () => {
           />
           <input
             type="date"
-            placeholder="Event Date"
-            value={eventData.date}
+            placeholder="Event Start Date"
+            value={testDate}
             onChange={(e) =>
-              setEventData({ ...eventData, date: e.target.value })
+              setEventData({ ...eventData, startDate: e.target.value })
             }
           />
           <input
@@ -93,7 +104,7 @@ const AddEventModal = () => {
             color="primary"
             border="rounded"
           >
-            Create Event
+            Edit Event
           </Button>
         </form>
       </Section>
@@ -101,4 +112,4 @@ const AddEventModal = () => {
   );
 };
 
-export default AddEventModal;
+export default EditEventModal;

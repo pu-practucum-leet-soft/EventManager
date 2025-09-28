@@ -6,11 +6,7 @@ export type EventViewModel = {
   description: string;
   startDate: string; // ISO string
   location: string;
-  createdBy: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  ownerUserId: string;
   participants?: EventParticipantViewModel[];
 };
 

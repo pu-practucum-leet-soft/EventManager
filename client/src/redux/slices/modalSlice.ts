@@ -22,7 +22,18 @@ export const modalSlice = createSlice({
       state.type = "inviteToEvent";
       state.props = action.payload;
     },
-    openEditEventModal: (state, action: PayloadAction<any>) => {
+    openEditEventModal: (
+      state,
+      action: PayloadAction<{
+        eventId: string;
+        initialData: {
+          title: string;
+          startDate: string;
+          location: string;
+          description: string;
+        };
+      }>
+    ) => {
       state.type = "editEvent";
       state.props = action.payload;
     },

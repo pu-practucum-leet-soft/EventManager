@@ -4,6 +4,7 @@ import { closeModal } from "@redux/slices/modalSlice";
 import styles from "./BaseModal.module.scss";
 import AddEventModal from "./AddEvent";
 import { useAppDispatch, useAppSelector } from "@redux/store";
+import EditEventModal from "./EditModal/EditEvent";
 
 export const BaseModal = () => {
   const dispatch = useAppDispatch();
@@ -25,9 +26,9 @@ export const BaseModal = () => {
     case "addEvent":
       content = <AddEventModal {...props} />;
       break;
-    // case "editEvent":
-    //   content = <EditEventModal {...props} />;
-    //   break;
+    case "editEvent":
+      content = <EditEventModal {...props} />;
+      break;
     // case "inviteToEvent":
     //   content = <InviteToEventModal {...props} />;
     //   break;

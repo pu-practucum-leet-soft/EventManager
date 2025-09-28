@@ -4,9 +4,13 @@ import Section from "@components/UI/Section/Section";
 import Button from "@components/UI/Button";
 import { useQuery } from "@tanstack/react-query";
 import eventQueries from "@queries/api/eventQueries";
+import OwnerOnly from "@components/Auth/OwnerOnly";
+import { useAppDispatch } from "@redux/store";
+import { openEditEventModal } from "@redux/slices/modalSlice";
 
 export const EventPage = () => {
   const params = useParams();
+  const dispatch = useAppDispatch();
 
   const {
     data: event,
@@ -33,6 +37,21 @@ export const EventPage = () => {
   if (!event) {
     return <div>No event found</div>;
   }
+  console.log(event);
+
+  const handleEdit = () => {
+    dispatch(
+      openEditEventModal({
+        eventId: event.id,
+        initialData: {
+          title: event.title,
+          startDate: event.startDate,
+          location: event.location,
+          description: event.description,
+        },
+      })
+    );
+  };
 
   return (
     <div className={styles.Event}>
@@ -53,12 +72,19 @@ export const EventPage = () => {
               })}
             </p>
             <div className={styles.Actions}>
-              <Button variant="primary" color="primary" border="rounded">
-                Edit Event
-              </Button>
-              <Button variant="primary" color="danger" border="rounded">
-                Delete Event
-              </Button>
+              <OwnerOnly userId={event.ownerUserId}>
+                <Button
+                  variant="primary"
+                  color="primary"
+                  border="rounded"
+                  onClick={handleEdit}
+                >
+                  Edit Event
+                </Button>
+                <Button variant="primary" color="danger" border="rounded">
+                  Delete Event
+                </Button>
+              </OwnerOnly>
               <Button variant="primary" color="secondary" border="rounded">
                 Share Event
               </Button>

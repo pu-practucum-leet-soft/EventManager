@@ -19,6 +19,26 @@ const eventQueries = {
   getById: async (id: string) => {
     return await axios.get<GetByIdResponse>(`${BASE_URL}/${id}`);
   },
+  addEvent: async (eventData: {
+    name: string;
+    description: string;
+    location: string;
+    startDate: string;
+  }) => {
+    return await axios.post<EventViewModel>(`${BASE_URL}`, eventData);
+  },
+  editEvent: async (eventData: {
+    eventId: string;
+    name: string;
+    description: string;
+    location: string;
+    startDate: string;
+  }) => {
+    return await axios.put<EventViewModel>(
+      `${BASE_URL}/${eventData.eventId}`,
+      eventData
+    );
+  },
 };
 
 export const eventCacheTags = {

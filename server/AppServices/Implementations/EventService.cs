@@ -46,7 +46,7 @@ public class EventService : IEventService
 
             await _db.Events.AddAsync(ev);
             // owner auto-joins
-            await _db.EventParticipants.AddAsync(new EventParticipant { EventId = ev.Id, InviteeId = ownerId });
+            await _db.EventParticipants.AddAsync(new EventParticipant { EventId = ev.Id, InviteeId = ownerId, InviterId = ownerId, Status = InviteStatus.Accepted });
 
             await _db.SaveChangesAsync();
 

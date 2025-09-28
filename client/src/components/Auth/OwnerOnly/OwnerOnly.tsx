@@ -3,13 +3,15 @@ import { useSelector } from "react-redux";
 import { getUser } from "@redux/slices/authSlice";
 
 type OwnerOnlyProps = {
-  ownerId: string;
+  userId: string;
   children: ReactNode;
 };
 
-const OwnerOnly: React.FC<OwnerOnlyProps> = ({ ownerId, children }) => {
-  const isOwner = useSelector(getUser)?.userId === ownerId;
-  if (!isOwner) return null;
+const OwnerOnly: React.FC<OwnerOnlyProps> = ({ userId, children }) => {
+  const currentUser = useSelector(getUser);
+
+  if (currentUser?.userId !== userId) return null;
+
   return <>{children}</>;
 };
 
