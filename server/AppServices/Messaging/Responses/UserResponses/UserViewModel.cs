@@ -1,8 +1,17 @@
 ﻿namespace EventManager.AppServices.Messaging.Responses.UserResponses
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class UserViewModel
     {
-        public string UserName { get; set; }
-        public string Email { get; set; }          
+        /// <summary>
+        /// 
+        /// </summary>
+        public string? UserName { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public string? Email { get; set; }          
     }
 }

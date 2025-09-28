@@ -10,6 +10,9 @@ using RefreshRequest = EventManager.AppServices.Messaging.Requests.UserRequests.
 
 namespace EventManager.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -17,6 +20,11 @@ namespace EventManager.Controllers
         private readonly IUsersService _service;
         private readonly IJwtHelper _jwtHelper;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="jwtHelper"></param>
         public UsersController(IUsersService service, IJwtHelper jwtHelper)
         {
             _service = service;
@@ -42,7 +50,11 @@ namespace EventManager.Controllers
 
             return Ok(response);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
@@ -61,7 +73,11 @@ namespace EventManager.Controllers
                 user = new { res.UserName, res.Email, res.Role }
             });
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
         [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
@@ -70,6 +86,10 @@ namespace EventManager.Controllers
             return res.StatusCode == BusinessStatusCodeEnum.Success ? Ok(res) : Unauthorized(res);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -77,6 +97,10 @@ namespace EventManager.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("me")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -94,7 +118,11 @@ namespace EventManager.Controllers
             });
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         [HttpGet("by-email")]
         [ProducesResponseType(typeof(UserIdResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

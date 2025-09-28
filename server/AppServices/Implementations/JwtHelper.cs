@@ -15,7 +15,9 @@ using System.Text;
 namespace EventManager.AppServices.Implementations
 {
 
-
+    /// <summary>
+    /// The service works with JWT initializers and credentials.
+    /// </summary>
     public class JwtHelper : IJwtHelper
     {
         private readonly EventManagerDbContext _context;
@@ -24,11 +26,12 @@ namespace EventManager.AppServices.Implementations
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UsersService"/> class.
+        /// JwtHelper service constructor 
         /// </summary>
-        /// <param name="logger">Logger.</param>
-        /// <param name="context">Movie database context.</param>
-
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        /// <param name="userManager"></param>
+        /// <param name="httpContextAccessor"></param>
         public JwtHelper(
         EventManagerDbContext context,
         IConfiguration configuration,
@@ -41,6 +44,11 @@ namespace EventManager.AppServices.Implementations
             _httpContextAccessor = httpContextAccessor;
         }
 
+        /// <summary>
+        /// Generates JWT.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public async Task<CreateJwtResponse> GenerateJwt(User user)
         {
             var roles = await _userManager.GetRolesAsync(user);
@@ -55,9 +63,9 @@ namespace EventManager.AppServices.Implementations
                 new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Secret"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Secret"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expiryTime = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtSettings:ExpiryMinutes"]));
+            var expiryTime = DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtSettings:ExpiryMinutes"]!));
 
             var jwt = new JwtSecurityToken(
                 issuer: _config["JwtSettings:Issuer"],
@@ -78,12 +86,17 @@ namespace EventManager.AppServices.Implementations
             };
         }
 
+        /// <summary>
+        /// Creates a new Refresh Token.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
         public async Task<RefreshTokenResponse> RenewRefreshToken(RefreshRequest req)
         {
             var response = new RefreshTokenResponse();
             var http = _httpContextAccessor.HttpContext;
 
-            var incoming = http.Request.Cookies["refresh-token"];
+            var incoming = http?.Request.Cookies["refresh-token"];
             if (string.IsNullOrEmpty(incoming))
                 return new RefreshTokenResponse
                 {
@@ -93,7 +106,7 @@ namespace EventManager.AppServices.Implementations
 
             var storedToken = await _context.RefreshTokens
                 .FirstOrDefaultAsync(x => x.Token == incoming);
-            var user = await _userManager.FindByIdAsync(storedToken.UserId.ToString());
+            var user = await _userManager.FindByIdAsync(storedToken?.UserId.ToString()!);
 
             if (storedToken == null || !storedToken.IsActive)
                 return new RefreshTokenResponse
@@ -102,40 +115,25 @@ namespace EventManager.AppServices.Implementations
                     Message = "Несъществуваща кредитация."
                 };
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user!);
             var mainRole = ResolveMainRole(roles);
 
-            var jwt = await GenerateJwt(storedToken.User);
+            var jwt = await GenerateJwt(storedToken.User!);
 
             storedToken.Revoked = DateTime.UtcNow;
-            storedToken.RevokedByIp = http.Connection.RemoteIpAddress?.ToString();
+            storedToken.RevokedByIp = http?.Connection.RemoteIpAddress?.ToString();
 
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(int.Parse(_config["RefreshTokenSettings:ExpiryMinutes"]));
+            var refreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(int.Parse(_config["RefreshTokenSettings:ExpiryMinutes"]!));
             var newRefreshToken = new RefreshToken
             {
                 Token = GenerateSecureRefreshToken(),
-                UserId = storedToken.User.Id,
+                UserId = storedToken.User!.Id,
                 Expires = refreshTokenExpiryTime,
-                CreatedByIp = http.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+                CreatedByIp = http?.Connection.RemoteIpAddress?.ToString() ?? "unknown"
             };
 
             await _context.RefreshTokens.AddAsync(newRefreshToken);
             await _context.SaveChangesAsync();
-
-            http.Response.Cookies.Append("jwt-token", jwt.Token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = jwt.TokenExpiryTime
-            });
-            http.Response.Cookies.Append("refresh-token", newRefreshToken.Token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = newRefreshToken.Expires
-            });
 
             return new RefreshTokenResponse
             {
@@ -145,6 +143,12 @@ namespace EventManager.AppServices.Implementations
             };
         }
 
+        /// <summary>
+        /// Confirm the Refresh Token is still active.
+        /// </summary>
+        /// <param name="refreshToken"></param>
+        /// <param name="revokedByIpString"></param>
+        /// <returns></returns>
         public async Task ConfirmRefreshTokenIsAlive(string? refreshToken, string revokedByIpString)
         {
             if (refreshToken != null)

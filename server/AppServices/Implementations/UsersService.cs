@@ -12,40 +12,37 @@ using static System.Net.WebRequestMethods;
 
 namespace EventManager.AppServices.Implementations
 {
-    public class UsersService : IUsersService
+    /// <summary>
+    /// Initializes the user service which manages the user actions.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="configuration"></param>
+    /// <param name="userManager"></param>
+    /// <param name="httpContextAccessor"></param>
+    /// <param name="jwtHelper"></param>
+    public class UsersService(
+        EventManagerDbContext context,
+        IConfiguration configuration,
+        UserManager<User> userManager,
+        IHttpContextAccessor httpContextAccessor,
+        IJwtHelper jwtHelper) : IUsersService
     {
-        private readonly EventManagerDbContext _context;
-        private readonly IConfiguration _config;
-        private readonly UserManager<User> _userManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly SignInManager<User> _signInManager;
-        private readonly IJwtHelper _jwtHelper;
+        private readonly EventManagerDbContext _context = context;
+        private readonly IConfiguration _config = configuration;
+        private readonly UserManager<User> _userManager = userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly IJwtHelper _jwtHelper = jwtHelper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UsersService"/> class.
+        /// Registers a new user.
         /// </summary>
-        /// <param name="logger">Logger.</param>
-        /// <param name="context">Movie database context.</param>
-
-        public UsersService(
-            EventManagerDbContext context,
-            IConfiguration configuration,
-            UserManager<User> userManager,
-            IHttpContextAccessor httpContextAccessor,
-            IJwtHelper jwtHelper)
-        {
-            _context = context;
-            _config = configuration;
-            _userManager = userManager;
-            _httpContextAccessor = httpContextAccessor;
-            _jwtHelper = jwtHelper;
-        }
-
+        /// <param name="request"></param>
+        /// <returns></returns>
         public async Task<CreateUserResponse> SaveAsync(CreateUserRequest request)
         {
             CreateUserResponse response = new();
 
-            var existingUser = await _userManager.FindByEmailAsync(request.User.Email);
+            var existingUser = await _userManager.FindByEmailAsync(request.User.Email!);
 
             if (existingUser is not null)
             {
@@ -59,7 +56,7 @@ namespace EventManager.AppServices.Implementations
                 Email = request.User.Email
             };
 
-            var create = await _userManager.CreateAsync(user, request.User.Password);
+            var create = await _userManager.CreateAsync(user, request.User.Password!);
             if (create.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, "User");
@@ -73,6 +70,11 @@ namespace EventManager.AppServices.Implementations
 
         }
 
+        /// <summary>
+        /// Gets a user from the database and returns the view model
+        /// </summary>
+        /// <param name="id">User data</param>
+        /// <returns>UserViewModel</returns>
         public async Task<UserViewModel?> GetUserByIdAsync(string id)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == id);
@@ -80,11 +82,17 @@ namespace EventManager.AppServices.Implementations
 
             return new UserViewModel
             {
-                UserName = user.UserName,
-                Email = user.Email
+                UserName = user.UserName!,
+                Email = user.Email!
             };
         }
 
+        /// <summary>
+        /// Gets a user from the database and returns the view model
+        /// </summary>
+        /// <param name="email">User information - email</param>
+        /// <returns></returns>
+        /// <exception cref="Exception">If the user is not found throws an Exception.</exception>
         public async Task<UserIdResponse> GetUserIdByEmailAsync(string email)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -94,6 +102,11 @@ namespace EventManager.AppServices.Implementations
             return new UserIdResponse { Id = user.Id };
         }
 
+        /// <summary>
+        /// Signs in the user.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>LoginResponse</returns>
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             var response = new LoginResponse();
@@ -106,7 +119,7 @@ namespace EventManager.AppServices.Implementations
                     Email = request.Email,
                     Message = "Въведените имейл и парола не съвпадат със съшествуващ потребител.",
                     StatusCode = BusinessStatusCodeEnum.BadRequest,
-                    UserName = user != null ? user?.UserName : "Несъществуващ потребител"
+                    UserName = "Несъществуващ потребител"
                 };
             }
 
@@ -128,35 +141,21 @@ namespace EventManager.AppServices.Implementations
             await _context.RefreshTokens.AddAsync(refresh);
             await _context.SaveChangesAsync();
 
-            var http = _httpContextAccessor.HttpContext!;
-            http.Response.Cookies.Append("jwt-token", jwt.Token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = jwt.TokenExpiryTime
-            });
-
-            http.Response.Cookies.Append("refresh-token", refresh.Token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = refresh.Expires
-            });
-
             return new LoginResponse
             {
-                UserName = user.UserName,
-                Email = user.Email,
+                UserName = user.UserName!,
+                Email = user.Email!,
                 Role = mainRole,
-                Token = jwt.Token,
+                Token = jwt.Token!,
                 TokenExpiryTime = jwt.TokenExpiryTime,
                 Message = $"Вписването във вашият профил премина успешно. Добре дошли, {user.UserName}",
                 StatusCode = BusinessStatusCodeEnum.Success
             };
         }
 
+        /// <summary>
+        /// Signs the user out.
+        /// </summary>
         public async Task LogoutAsync()
         {
             var http = _httpContextAccessor.HttpContext!;
@@ -176,6 +175,12 @@ namespace EventManager.AppServices.Implementations
             http.Response.Cookies.Delete("refresh-token");
         }
 
+        /// <summary>
+        /// Adds a role for the user
+        /// </summary>
+        /// <param name="userId">The user's Id</param>
+        /// <param name="roleName">The selected role</param>
+        /// <returns></returns>
         public async Task<string> AssignRole(string userId, string roleName)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -195,6 +200,7 @@ namespace EventManager.AppServices.Implementations
             RandomNumberGenerator.Fill(bytes);
             return Convert.ToBase64String(bytes);
         }
+
 
         private static string ResolveMainRole(IList<string> roles)
             => roles.Contains("Admin") ? "Admin" : "User";
