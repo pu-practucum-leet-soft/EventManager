@@ -61,9 +61,9 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Edit([FromBody] EditEventRequest req)
+    public async Task<IActionResult> Edit([FromRoute] Guid eventId, [FromBody] EditEventRequest req)
     {
-        var res = await _service.EditEvent(req);
+        var res = await _service.EditEvent(eventId, req);
         return Ok(res);
     }
 

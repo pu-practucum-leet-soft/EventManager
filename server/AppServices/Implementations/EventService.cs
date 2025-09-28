@@ -123,15 +123,16 @@ public class EventService : IEventService
     /// <summary>
     /// Provides access to an event and changes the contents of the event data.
     /// </summary>
+    /// <param name="eventId"> </param> 
     /// <param name="req">
     /// Conains the event data to be passed to the database entity.
     /// </param> 
     /// <returns>EditEventResponse returns a message signifying the completion of the request.</returns>
     /// <response code="200">Returns the requested project board.</response>
     /// <response code="404">If the project board is not found.</response>
-    public async Task<EditEventResponse> EditEvent(EditEventRequest req)
+    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
     {
-        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == req.EventId);
+        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 

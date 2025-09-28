@@ -22,13 +22,14 @@ public interface IEventService
     /// <param name="req"></param>
     /// <returns></returns>
     Task<EventViewModel> GetEvent(GetEventRequest req);
-    
+
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="eventId"></param>
     /// <param name="req"></param>
     /// <returns></returns>
-    Task<EditEventResponse> EditEvent(EditEventRequest req);
+    Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req);
     
     /// <summary>
     /// 
