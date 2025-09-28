@@ -11,7 +11,6 @@ const InvitesPage = () => {
     queryFn: async () => {
       const res = await invitesQueries.getInvites();
 
-      console.log(res.data);
       return res.data;
     },
     retry: false,
