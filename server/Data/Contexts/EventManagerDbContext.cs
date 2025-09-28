@@ -6,19 +6,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.Contexts
 {
-
+    /// <summary>
+    /// 
+    /// </summary>
     public class EventManagerDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public DbSet<Event> Events { get; set; }
-
+        /// <summary>
+        /// 
+        /// </summary>
         public DbSet<EventParticipant> EventParticipants { get; set; }
-
+        /// <summary>
+        /// 
+        /// </summary>
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="options"></param>
         public EventManagerDbContext(DbContextOptions<EventManagerDbContext> options) : base(options)
         {
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -12,14 +12,22 @@ using System.Text;
 
 namespace EventManager
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Program
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!));
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
