@@ -11,6 +11,7 @@ export type EventViewModel = {
     name: string;
     email: string;
   };
+  participants?: EventParticipantViewModel[];
 };
 
 export type EventParticipantViewModel = {

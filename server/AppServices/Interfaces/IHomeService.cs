@@ -4,5 +4,5 @@ namespace EventManager.AppServices.Interfaces;
 
 public interface IHomeService
 {
-    Task<GetHomeResponse> GetHome(string userId);
+    Task<GetHomeResponse> GetHome(Guid userId);
 }

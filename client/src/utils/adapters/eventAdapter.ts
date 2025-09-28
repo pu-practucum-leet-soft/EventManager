@@ -15,6 +15,7 @@ export const eventViewModelToCardProps = (
   event: EventViewModel
 ): IEventCardProps => {
   return {
+    id: event.id,
     title: event.title,
     location: event.location,
     startDate: event.startDate,

@@ -21,9 +21,9 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
-        justify-content: space-between;
 
         .Actions {
+          margin-top: auto;
           display: flex;
           gap: 10px;
         }

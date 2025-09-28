@@ -3,14 +3,32 @@ import classNames from "classnames";
 import EventsList from "@components/EventsList";
 import Section from "@components/UI/Section";
 
-import { events } from "@pages/dummyData";
-
 import styles from "./Events.module.scss";
 import Button from "@components/UI/Button";
 import Icon from "@components/UI/Icon";
+import eventQueries, { eventCacheTags } from "@queries/api/eventQueries";
+import { useQuery } from "@tanstack/react-query";
+import { eventViewModelsToCardProps } from "@utils/adapters/eventAdapter";
 
 const EventsPage = () => {
-  // TODO: Example rendering of events, adjust as needed when actual data structure is known
+  const { data, isLoading, error } = useQuery({
+    queryKey: [eventCacheTags.index],
+    queryFn: async () => {
+      const res = await eventQueries.getAll();
+
+      return res.data;
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error || !data) {
+    return <div>Error loading data</div>;
+  }
+
   return (
     <div className={styles.Events}>
       <h1>Events</h1>
@@ -69,7 +87,10 @@ const EventsPage = () => {
           </Button>
         </div>
         <Section className={styles.EventList}>
-          <EventsList events={events} noEventsMessage="No events found." />
+          <EventsList
+            events={eventViewModelsToCardProps(data.events)}
+            noEventsMessage="No events found."
+          />
         </Section>
         <div className={styles.Actions}>
           <div className={styles.Pagination}>

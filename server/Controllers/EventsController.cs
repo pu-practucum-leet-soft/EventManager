@@ -34,14 +34,16 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Get event details by ID.
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     [ProducesResponseType(typeof(EventViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetEventById(Guid id)
+    public async Task<IActionResult> GetEventById([FromRoute] string id)
     {
-        var res = await _service.GetEvent(new GetEventRequest { EventId = id });
+        Console.WriteLine(id);
+        if (!Guid.TryParse(id, out var eventId)) return BadRequest("Invalid event ID.");
+        var res = await _service.GetEventById(eventId);
         if (res == null) return NotFound();
         return Ok(res);
     }

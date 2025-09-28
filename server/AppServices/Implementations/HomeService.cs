@@ -26,12 +26,10 @@ public class HomeService : IHomeService
         _logger = logger;
     }
 
-    public async Task<GetHomeResponse> GetHome(string userId)
+    public async Task<GetHomeResponse> GetHome(Guid userId)
     {
-        const string testId = "5681CBE1-F803-4F06-016E-08DDFC217494";
-
         var upcomingEvents = await _db.Events
-            .Where(e => e.OwnerUserId.ToString() == testId)
+            .Where(e => e.OwnerUserId == userId)
             .Select(e => new EventViewModel
             {
                 Id = e.Id,
@@ -59,7 +57,7 @@ public class HomeService : IHomeService
             .ToArrayAsync();
 
         var invites = await _db.EventParticipants
-            .Where(ep => ep.InviteeId.ToString() == testId && ep.Status == InviteStatus.Invited)
+            .Where(ep => ep.InviteeId == userId && ep.Status == InviteStatus.Invited)
             .Include(ep => ep.Event)
             .Include(ep => ep.Inviter)
             .Select(ep => new EventParticipantViewModel

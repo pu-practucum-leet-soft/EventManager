@@ -12,4 +12,5 @@ public interface IEventService
     Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req, string inviterId);
     Task<GetAllEventsResponse> GetAllEvents();
     Task<StatisticViewModel> GetEventStatistic(Guid ownerId);
+    Task<GetByIdResponse> GetEventById(Guid id);
 }

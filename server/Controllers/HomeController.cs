@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using EventManager.AppServices.Interfaces;
 using EventManager.AppServices.Messaging.Responses.HomeResponses;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EventManager.Controllers
 {
@@ -23,9 +24,9 @@ namespace EventManager.Controllers
         [Authorize]
         public IActionResult Index()
         {
-            // TODO: Process the response from the service properly
-            // TODO: Replace with actual user ID from auth context
-            return _service.GetHome("test-user-id").Result is GetHomeResponse res ? Ok(res) : NotFound();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var me)) return Unauthorized();
+            return _service.GetHome(me).Result is GetHomeResponse res ? Ok(res) : NotFound();
         }
     }
 }

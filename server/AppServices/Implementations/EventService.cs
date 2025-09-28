@@ -1,4 +1,6 @@
+using System.Reflection.Metadata.Ecma335;
 using EventManager.AppServices.Interfaces;
+using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
@@ -89,6 +91,47 @@ public class EventService : IEventService
             Status = ev.Status
         };
     }
+
+    public async Task<GetByIdResponse> GetEventById(Guid id)
+    {
+        var res = new GetByIdResponse();
+
+        var ev = await _db.Events
+            .AsNoTracking()
+            .Include(e => e.Participants)
+            .ThenInclude(p => p.Invitee)
+            .Include(e => e.OwnerUser)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (ev == null)
+        {
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.NotFound;
+            return res;
+        }
+
+        var participants = ev.Participants
+            .Where(p => p.Status == InviteStatus.Accepted)
+            .ToList();
+        var owner = new UserViewModel
+        {
+            UserName = ev.OwnerUser.UserName,
+            Email = ev.OwnerUser.Email,
+        };
+
+        res.Event = new EventViewModel
+        {
+            Id = ev.Id,
+            Title = ev.Title,
+            Description = ev.Description,
+            StartDate = ev.StartDate,
+            Location = ev.Location,
+            OwnerUserId = ev.OwnerUserId,
+            Participants = participants,
+            Status = ev.Status
+        };
+
+        return res;
+     }
 
     public async Task<EditEventResponse> EditEvent(EditEventRequest req)
     {

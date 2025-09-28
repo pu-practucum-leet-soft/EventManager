@@ -14,6 +14,14 @@ const invitesQueries = {
     const response = await axios.get<GetInvitesResponse>(`${BASE_URL}`);
     return response;
   },
+  acceptInvite: async (inviteId: string) => {
+    const response = await axios.post(`${BASE_URL}/${inviteId}/accept`);
+    return response;
+  },
+  declineInvite: async (inviteId: string) => {
+    const response = await axios.post(`${BASE_URL}/${inviteId}/decline`);
+    return response;
+  },
 };
 
 export const invitesCacheTags = {
