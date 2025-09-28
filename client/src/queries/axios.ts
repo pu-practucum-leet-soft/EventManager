@@ -52,7 +52,9 @@ instance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        store.dispatch(setCredentials({ accessToken: newToken }));
+        store.dispatch(
+          setCredentials({ accessToken: newToken, user: response.data.user })
+        );
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return instance(originalRequest);
