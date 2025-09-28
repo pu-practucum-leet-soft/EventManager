@@ -9,8 +9,12 @@ import Icon from "@components/UI/Icon";
 import eventQueries, { eventCacheTags } from "@queries/api/eventQueries";
 import { useQuery } from "@tanstack/react-query";
 import { eventViewModelsToCardProps } from "@utils/adapters/eventAdapter";
+import { useDispatch } from "react-redux";
+import { openAddEventModal } from "@redux/slices/modalSlice";
 
 const EventsPage = () => {
+  const dispatch = useDispatch();
+
   const { data, isLoading, error } = useQuery({
     queryKey: [eventCacheTags.index],
     queryFn: async () => {
@@ -28,6 +32,10 @@ const EventsPage = () => {
   if (error || !data) {
     return <div>Error loading data</div>;
   }
+
+  const handleOnAddEvent = () => {
+    dispatch(openAddEventModal({}));
+  };
 
   return (
     <div className={styles.Events}>
@@ -113,7 +121,12 @@ const EventsPage = () => {
             </Button>
           </div>
           <div className={styles.AddEvent}>
-            <Button variant="primary" color="primary" border="rounded">
+            <Button
+              variant="primary"
+              color="primary"
+              border="rounded"
+              onClick={handleOnAddEvent}
+            >
               Add Event
             </Button>
           </div>
