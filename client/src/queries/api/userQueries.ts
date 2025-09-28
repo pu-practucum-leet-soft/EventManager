@@ -20,9 +20,12 @@ const userQueries = {
     return response;
   },
   refresh: async () => {
-    const response = await axios.post<LoginResponse>(`${BASE_URL}/refresh`, {
-      withCredentials: true,
-    });
+    const response = await axios.post<{ token: string }>(
+      `${BASE_URL}/refresh`,
+      {
+        withCredentials: true,
+      }
+    );
 
     return response;
   },

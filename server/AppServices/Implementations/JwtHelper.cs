@@ -49,6 +49,7 @@ namespace EventManager.AppServices.Implementations
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, user.UserName!),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim("Role", userRole),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),

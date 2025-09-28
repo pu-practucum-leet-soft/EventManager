@@ -7,11 +7,13 @@ import userQueries from "@queries/api/userQueries";
 import config from "@config";
 const { routes } = config;
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { jwtDecode } from "jwt-decode";
 
-const ProtectedRoute = (children: ReactNode) => {
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const token = useSelector((state: any) => state.auth.token);
 
   // Only run query if we're actually in a protected route context
   const shouldCheckAuth =
@@ -22,11 +24,25 @@ const ProtectedRoute = (children: ReactNode) => {
     queryFn: async () => {
       const response = await userQueries.refresh();
 
+      const data = response.data;
+
+      if (data.token) {
+        const decodedToken: { sub: string; name: string } = jwtDecode(
+          data.token
+        );
+        dispatch(
+          setCredentials({
+            accessToken: data.token,
+            user: { userId: decodedToken.sub, username: decodedToken.name },
+          })
+        );
+      }
+
       return response.data;
     },
     retry: false,
     refetchOnWindowFocus: false,
-    enabled: shouldCheckAuth,
+    enabled: shouldCheckAuth && !!!token, // Only check if we don't have a token yet
   });
 
   if (isError) {
@@ -40,8 +56,6 @@ const ProtectedRoute = (children: ReactNode) => {
   if (!data || !isSuccess) {
     return <Navigate to={routes.login} state={{ from: location }} replace />;
   }
-
-  dispatch(setCredentials({ accessToken: data.token }));
 
   return children;
 };

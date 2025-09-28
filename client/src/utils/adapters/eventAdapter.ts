@@ -5,6 +5,12 @@ import {
 import { IEventCardProps } from "@components/EventCard";
 import { IInviteCardProps } from "@components/InviteCard";
 
+const statusMap: { [key: string]: "pending" | "accepted" | "declined" } = {
+  0: "pending",
+  1: "accepted",
+  2: "declined",
+};
+
 export const eventViewModelToCardProps = (
   event: EventViewModel
 ): IEventCardProps => {
@@ -22,7 +28,9 @@ export const eventParticipantViewModelToCardProps = (
     eventId: eventParticipant.event.id,
     eventTitle: eventParticipant.event.title,
     startDate: eventParticipant.event.startDate,
+    inviteeName: eventParticipant.invitee?.userName || "Unknown",
     inviterName: eventParticipant.inviter?.userName || "Unknown",
+    status: statusMap[eventParticipant.status] || "unknown",
   };
 };
 

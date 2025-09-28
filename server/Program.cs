@@ -124,6 +124,7 @@ namespace EventManager
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
             builder.Services.AddScoped<IHomeService, HomeService>();
+            builder.Services.AddScoped<IInvitesService, InvitesService>();
             builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
             builder.Services.AddHttpContextAccessor();
