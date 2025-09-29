@@ -2,8 +2,16 @@
 {
     using Microsoft.AspNetCore.Identity;
 
+    /// <summary>
+    /// 
+    /// </summary>
     public class RoleDataSeeder
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="roleManager"></param>
+        /// <returns></returns>
         public static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
         {
             string[] roleNames = { "Admin", "User" };

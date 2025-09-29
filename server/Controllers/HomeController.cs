@@ -7,6 +7,9 @@ using System.Security.Claims;
 
 namespace EventManager.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class HomeController : ControllerBase
@@ -14,12 +17,19 @@ namespace EventManager.Controllers
         private readonly IHomeService _service;
         private readonly ILogger<HomeController> _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="logger"></param>
         public HomeController(IHomeService service, ILogger<HomeController> logger)
         {
             _service = service;
             _logger = logger;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Authorize]
         public IActionResult Index()

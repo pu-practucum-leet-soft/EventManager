@@ -1,7 +1,13 @@
 ﻿namespace EventManager.AppServices.Messaging.Responses.UserResponses
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class CreateUserResponse : ServiceResponseBase
     {
-        public string Message { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public string? Message { get; set; }
     }
 }

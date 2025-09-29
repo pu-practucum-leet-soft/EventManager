@@ -11,17 +11,34 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.AppServices.Implementations;
-
+/// <summary>
+/// Serves to contain the business logic for handling the events.
+/// </summary>
 public class EventService : IEventService
 {
     private readonly EventManagerDbContext _db;
     private readonly ILogger<EventService> _logger;
+
+    /// <summary>
+    /// The EventService constructor serves to instantiate the service and inject the needed dependencies.
+    /// </summary>
     public EventService(EventManagerDbContext db, ILogger<EventService> logger)
     {
         _db = db;
         _logger = logger;
     }
 
+    /// <summary>
+    /// The CreateEvent method delivers customer data from the client side uses it to instatiate the Event entity that is being persisted into the storage.
+    /// </summary>
+    /// <param name="req">
+    /// The CreateEventRequest is a view model that contais user defined data with details about a new event. 
+    /// It acts as a mediator for transferring the creation data.
+    /// </param> 
+    /// <param name="userId">
+    /// The userId parameter is extracted from the UserManager service in the Controller Action and passed to the method.
+    /// </param>
+    /// <returns>The CreateEventResponse view model containing the status of the request and a message to track the process.</returns>
     public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req, string userId)
     {
         var res = new CreateEventResponse();
@@ -41,7 +58,7 @@ public class EventService : IEventService
                 Description = req.Description,
                 StartDate = req.StartDate,
                 OwnerUserId = ownerId,
-                Status = Data.Enums.EventStatus.Active
+                Status = EventStatus.Active
             };
 
             await _db.Events.AddAsync(ev);
@@ -63,6 +80,15 @@ public class EventService : IEventService
         }
     }
 
+    /// <summary>
+    /// Provides access to the database and queries for a single event called by the client.
+    /// </summary>
+    /// <param name="req">
+    /// Contains the Event Id used to query the Events table.
+    /// </param> 
+    /// <returns>EventViewModel that contains the main event data along with the contact information of the event owner.</returns>
+    /// <response code="200">Returns the requested project board.</response>
+    /// <response code="404">If the project board is not found.</response>
     public async Task<EventViewModel> GetEvent(GetEventRequest req)
     {
         var ev = await _db.Events
@@ -70,26 +96,31 @@ public class EventService : IEventService
             .Include(e => e.Participants)
             .FirstOrDefaultAsync(e => e.Id == req.EventId);
 
-        if (ev == null) throw new KeyNotFoundException("Event not found");
-
-        var participantIds = ev.Participants.ToList();
-        var owner = new UserViewModel
+        if (ev?.OwnerUser?.UserName is not null && ev?.OwnerUser?.Email is not null)
         {
-            UserName = ev.OwnerUser.UserName,
-            Email = ev.OwnerUser.Email,
-        };
+            var participantIds = ev.Participants.ToList();
+            var owner = new UserViewModel
+            {
+                UserName = ev.OwnerUser.UserName,
+                Email = ev.OwnerUser.Email,
+            };
 
-        return new EventViewModel
+            return new EventViewModel
+            {
+                Id = ev.Id,
+                Title = ev.Title!,
+                Description = ev.Description,
+                StartDate = ev.StartDate,
+                Location = ev.Location,
+                OwnerUserId = ev.OwnerUserId,
+                Participants = ev.Participants,
+                Status = ev.Status
+            };
+        }
+        else
         {
-            Id = ev.Id,
-            Title = ev.Title,
-            Description = ev.Description,
-            StartDate = ev.StartDate,
-            Location = ev.Location,
-            OwnerUserId = ev.OwnerUserId,
-            Participants = ev.Participants,
-            Status = ev.Status
-        };
+            throw new KeyNotFoundException("Event not found");
+        }
     }
 
     public async Task<GetByIdResponse> GetEventById(Guid id)
@@ -133,9 +164,19 @@ public class EventService : IEventService
         return res;
      }
 
-    public async Task<EditEventResponse> EditEvent(EditEventRequest req)
+    /// <summary>
+    /// Provides access to an event and changes the contents of the event data.
+    /// </summary>
+    /// <param name="eventId"> </param> 
+    /// <param name="req">
+    /// Conains the event data to be passed to the database entity.
+    /// </param> 
+    /// <returns>EditEventResponse returns a message signifying the completion of the request.</returns>
+    /// <response code="200">Returns the requested project board.</response>
+    /// <response code="404">If the project board is not found.</response>
+    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
     {
-        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == req.EventId);
+        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
@@ -152,6 +193,16 @@ public class EventService : IEventService
         return new EditEventResponse { Success = true };
     }
 
+    /// <summary>
+    /// Gets an event from the database and invites a participant.
+    /// </summary>
+    /// <param name="req">
+    /// Sends data from the client about the participants who are to be invited to the event.
+    /// </param> 
+    /// <param name="inviterId">
+    /// Contains the Id of the user who is sends the invites.
+    /// </param> 
+    /// <returns>The response contains the number of invited users.</returns>
     public async Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req, string inviterId)
     {
         var ev = await _db.Events.Include(e => e.Participants).FirstOrDefaultAsync(e => e.Id == req.EventId);
@@ -181,6 +232,10 @@ public class EventService : IEventService
         return new AddParticipantsResponse { Added = added };
     }
 
+    /// <summary>
+    /// The method calls all created events and returns them to the client.
+    /// </summary>
+    /// <returns>The GetAllEventsResponse returns the collected events from the database.</returns>
     public async Task<GetAllEventsResponse> GetAllEvents()
     {
         var response = new GetAllEventsResponse();
@@ -190,7 +245,7 @@ public class EventService : IEventService
         var allEventsList = q.Select(e => new EventSummary
         {
             Id = e.Id,
-            Title = e.Title,
+            Title = e.Title!,
             Description = e.Description,
             StartDate = e.StartDate,
             OwnerUserId = e.OwnerUserId,
@@ -201,49 +256,83 @@ public class EventService : IEventService
 
         response.Events = allEventsList;
 
-        //res.Add(new EventSummary { Name = "eventData1", Location = "Sofia", Description = "asd", ParticipantsCount = new List<string> { "1", "2", "3", "5", "12" }.Count });
-        //res.Add(new EventSummary { Name = "eventData2", Location = "Sofia", Description = "afsda", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
-        //res.Add(new EventSummary { Name = "eventData3", Location = "Plovdiv", Description = "asdgwefw", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
-        //res.Add(new EventSummary { Name = "eventData4", Location = "Plovdiv", Description = "asdwd", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2", "2", "2" }.Count });
-        //res.Add(new EventSummary { Name = "eventData5", Location = "Varna", Description = "asdfsadg", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2", "2", "2" }.Count });
-        //res.Add(new EventSummary { Name = "eventData6", Location = "Varna", Description = "asdgs", ParticipantsCount = new List<string> { "1", "2", "3", "2", "2" }.Count });
-        //res.Add(new EventSummary { Name = "eventData7", Location = "Plovdiv", Description = "swef", ParticipantsCount = new List<string> { "1", "2", "3" }.Count });
-
         return response;
     }
 
-    //Общ брой събития, създадени от потребителя.
-    //Процент участници, потвърдили участие("Потвърден") спрямо всички поканени.
+
+    /// <summary>
+    /// Calculates the a statistic about events' count and the percentage of participants who accepted their invites.
+    /// </summary>
+    /// <param name="ownerId">
+    /// A Guid of the owner of the event/s
+    /// </param> 
+    /// <returns>The view modal with the calculated data and additional information.</returns>
     public async Task<StatisticViewModel> GetEventStatistic(Guid ownerId)
     {
         var ownerEvents = await _db.Events
             .AsNoTracking()
             .Where(x => x.OwnerUserId == ownerId)
+            .Include(x => x.Participants)
             .ToListAsync();
+
+        if (!ownerEvents.Any())
+        {
+            return new StatisticViewModel
+            {
+                EventStatistics = new List<EventStatistic>(),
+                OwnerEventsCount = 0,
+                OwnerId = ownerId
+            };
+        }
 
         var res = new StatisticViewModel();
         // Total count of events created by the uuser.
         res.OwnerEventsCount = ownerEvents.Count();
 
-        foreach ( var @event in ownerEvents)
+        foreach (var @event in ownerEvents)
         {
             // Calculate percentage of "Accepted" invites against all "Invited".
+            var currentEventStatistic = 0.0;
             var eventParticipants = @event.Participants.ToList();
 
             var participantsWithAcceptedInvites = eventParticipants
                 .Where(x => x.Status == InviteStatus.Accepted)
                 .Count();
 
+            var participantsWithDeclinedInvites = eventParticipants
+                .Where(x => x.Status == InviteStatus.Declined)
+                .Count();
+
+            var participantsWithPendingInvites = eventParticipants
+                .Where(x => x.Status == InviteStatus.Invited)
+                .Count();
+
+
             var particpantsWithInvites = eventParticipants.Count();
 
-            var currentEventStastic = participantsWithAcceptedInvites / particpantsWithInvites;
+            currentEventStatistic = particpantsWithInvites == 0 ? 0 : (double)participantsWithAcceptedInvites / particpantsWithInvites;
+
+            var eventViewModel = new EventViewModel
+            {
+                Id = @event.Id,
+                Description = @event.Description,
+                Location = @event.Location,
+                OwnerUserId = @event.OwnerUserId,
+                StartDate = @event.StartDate,
+                Status = @event.Status,
+                Title = @event.Title!,
+                Participants = eventParticipants
+            };
 
             res.EventStatistics.Add(new EventStatistic
-            { 
+            {
                 EventId = @event.Id,
+                Event = eventViewModel,
                 AcceptedInvitesCount = participantsWithAcceptedInvites,
+                DeclinedInvitesCount = participantsWithDeclinedInvites,
+                PendingInvitesCount = participantsWithPendingInvites,
                 TotalInvitedCount = particpantsWithInvites,
-                CalculatedStatsticResult = currentEventStastic
+                CalculatedStatsticResult = currentEventStatistic
             });
         }
 

@@ -1,5 +1,8 @@
 ﻿namespace EventManager.AppServices.Messaging.Requests.UserRequests
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public sealed class RefreshRequest
     {
         // public string RefreshToken { get; set; } = default!;

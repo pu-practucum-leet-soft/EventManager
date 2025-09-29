@@ -9,11 +9,18 @@ using System.Security.Claims;
 
 namespace EventManager.Controllers;
 
+/// <summary>
+/// 
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
     private readonly IEventService _service;
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="service"></param>
     public EventsController(IEventService service) => _service = service;
 
     /// <summary>
@@ -27,7 +34,7 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateEventRequest req)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var res = await _service.CreateEvent(req, userId);
+        var res = await _service.CreateEvent(req, userId!);
         return Ok(res);
     }
 
@@ -56,9 +63,9 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Edit([FromBody] EditEventRequest req)
+    public async Task<IActionResult> Edit([FromRoute] Guid eventId, [FromBody] EditEventRequest req)
     {
-        var res = await _service.EditEvent(req);
+        var res = await _service.EditEvent(eventId, req);
         return Ok(res);
     }
 
@@ -74,7 +81,7 @@ public class EventsController : ControllerBase
     {
         req.EventId = id;
         var inviterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var res = await _service.AddParticipants(req, inviterId);
+        var res = await _service.AddParticipants(req, inviterId!);
         return Ok(res);
     }
 
@@ -87,7 +94,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll()
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var res = await _service.GetAllEvents();
         return Ok(res);
     }
@@ -102,7 +109,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetStatistic()
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var res = await _service.GetEventStatistic(userId);
         return Ok(res);
     }
