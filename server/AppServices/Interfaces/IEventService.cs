@@ -29,7 +29,7 @@ public interface IEventService
     /// <param name="eventId"></param>
     /// <param name="req"></param>
     /// <returns></returns>
-    Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req);
+    Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req);
     
     /// <summary>
     /// 

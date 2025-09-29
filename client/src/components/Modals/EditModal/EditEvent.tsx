@@ -20,7 +20,6 @@ type EditEventModalProps = {
 const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
-  console.log(initialData);
   const [eventData, setEventData] = useState({
     title: initialData.title,
     startDate: initialData.startDate,
@@ -32,7 +31,7 @@ const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
     mutationKey: ["editEvent"],
     mutationFn: async (updatedEvent: {
       eventId: string;
-      name: string;
+      title: string;
       description: string;
       location: string;
       startDate: string;
@@ -41,7 +40,7 @@ const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
     },
     onSuccess: (data) => {
       console.log(data);
-      queryClient.invalidateQueries({ queryKey: [eventCacheTags.index] });
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
       dispatch(closeModal());
     },
     onError: (error) => {
@@ -56,7 +55,7 @@ const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
     // console.log("Event Data:", eventData);
     editMutate.mutate({
       eventId: eventId,
-      name: eventData.title,
+      title: eventData.title,
       description: eventData.description,
       location: eventData.location,
       startDate: eventData.startDate,
@@ -71,9 +70,9 @@ const EditEventModal = ({ eventId, initialData }: EditEventModalProps) => {
             type="text"
             placeholder="Event Title"
             value={eventData.title}
-            onChange={(e) =>
-              setEventData({ ...eventData, title: e.target.value })
-            }
+            onChange={(e) => {
+              setEventData({ ...eventData, title: e.target.value });
+            }}
           />
           <input
             type="date"

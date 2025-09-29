@@ -141,6 +141,17 @@ namespace EventManager.AppServices.Implementations
             await _context.RefreshTokens.AddAsync(refresh);
             await _context.SaveChangesAsync();
 
+
+            var http = _httpContextAccessor.HttpContext!;
+            http.Response.Cookies.Append("refresh-token", refresh.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = refresh.Expires
+            });
+
+
             return new LoginResponse
             {
                 UserName = user.UserName!,

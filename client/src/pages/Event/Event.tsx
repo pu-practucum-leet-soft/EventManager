@@ -59,7 +59,7 @@ export const EventPage = () => {
       <div className={styles.EventContent}>
         <Section className={styles.Details}>
           <div className={styles.DetailContent}>
-            <p>{event.description}</p>
+            <p className={styles.Description}>{event.description}</p>
             <p>Location: {event.location}</p>
             <p>
               Start Date:{" "}

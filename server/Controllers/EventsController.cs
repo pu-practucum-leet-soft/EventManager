@@ -58,14 +58,23 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Edit existing event.
     /// </summary>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{eventId}")]
     [Authorize]
     [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Edit([FromRoute] Guid eventId, [FromBody] EditEventRequest req)
+    public async Task<IActionResult> Edit([FromRoute] string eventId, [FromBody] EditEventRequest req)
     {
-        var res = await _service.EditEvent(eventId, req);
+        Console.WriteLine(eventId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+        if (!Guid.TryParse(userId, out var userGuid))
+        {
+            return Unauthorized();
+        }
+        if (!Guid.TryParse(eventId, out var eventIdGuid)) return BadRequest("Invalid event ID.");
+
+        var res = await _service.EditEvent(eventIdGuid, userGuid, req);
         return Ok(res);
     }
 

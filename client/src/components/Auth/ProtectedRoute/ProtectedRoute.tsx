@@ -23,7 +23,6 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     queryKey: ["loggedUser"],
     queryFn: async () => {
       const response = await userQueries.refresh();
-
       const data = response.data;
 
       if (data.token) {
@@ -42,7 +41,7 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    enabled: shouldCheckAuth && !!!token, // Only check if we don't have a token yet
+    enabled: shouldCheckAuth && !token, // Only check if we don't have a token yet
   });
 
   if (isError) {

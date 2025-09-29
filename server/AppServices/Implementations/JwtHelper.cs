@@ -136,6 +136,15 @@ namespace EventManager.AppServices.Implementations
             await _context.RefreshTokens.AddAsync(newRefreshToken);
             await _context.SaveChangesAsync();
 
+
+            http.Response.Cookies.Append("refresh-token", newRefreshToken.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = newRefreshToken.Expires
+            });
+
             return new RefreshTokenResponse
             {
                 Message = "Токенът беше обновен успешно.",

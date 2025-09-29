@@ -29,11 +29,13 @@ const eventQueries = {
   },
   editEvent: async (eventData: {
     eventId: string;
-    name: string;
+    title: string;
     description: string;
     location: string;
     startDate: string;
   }) => {
+    console.log(`${BASE_URL}/${eventData.eventId}`);
+    console.log(eventData);
     return await axios.put<EventViewModel>(
       `${BASE_URL}/${eventData.eventId}`,
       eventData

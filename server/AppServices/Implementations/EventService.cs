@@ -168,26 +168,29 @@ public class EventService : IEventService
     /// Provides access to an event and changes the contents of the event data.
     /// </summary>
     /// <param name="eventId"> </param> 
+    /// <param name="userId"> </param> 
     /// <param name="req">
     /// Conains the event data to be passed to the database entity.
     /// </param> 
     /// <returns>EditEventResponse returns a message signifying the completion of the request.</returns>
     /// <response code="200">Returns the requested project board.</response>
     /// <response code="404">If the project board is not found.</response>
-    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
+    public async Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req)
     {
+        Console.WriteLine($"Editing event {eventId} by user {userId}");
         var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
-        if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can edit");
+        if (ev.OwnerUserId != userId) throw new UnauthorizedAccessException("Only owner can edit");
 
+        Console.WriteLine($"Before Edit: Title={ev.Title}, Location={ev.Location}, Description={ev.Description}, StartDate={ev.StartDate}");
+        Console.WriteLine($"Edit Request: Title={req.Title}, Location={req.Location}, Description={req.Description}, StartDate={req.StartDate}");
         if (req.Title is not null) ev.Title = req.Title;
         if (req.Location is not null) ev.Location = req.Location;
         if (req.Description is not null) ev.Description = req.Description;
         // the state of the properties below will be checked and ensured to have values in the FE
         ev.StartDate = req.StartDate;
-        ev.Status = req.Status;
 
         await _db.SaveChangesAsync();
         return new EditEventResponse { Success = true };
