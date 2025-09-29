@@ -10,6 +10,14 @@ type LoginResponse = {
 const BASE_URL = `/users`;
 
 const userQueries = {
+  register: async (data: {
+    email: string;
+    userName: string;
+    password: string;
+  }) => {
+    const response = await axios.post(`${BASE_URL}/register`, data);
+    return response;
+  },
   login: async (data: { email: string; password: string }) => {
     const response = await axios.post<LoginResponse>(`${BASE_URL}/login`, data);
 

@@ -12,6 +12,19 @@ type GetByIdResponse = {
   event: EventViewModel;
 };
 
+export type Stats = {
+  acceptedInvitesCount: number;
+  declinedInvitesCount: number;
+  pendingInvitesCount: number;
+  eventId: string;
+  event: EventViewModel;
+};
+
+type GetStatisticsResponse = {
+  eventStatistics: Stats[];
+  ownerEventsCount: number;
+};
+
 const eventQueries = {
   getAll: async () => {
     // TODO: adjust endpoint as needed
@@ -19,6 +32,9 @@ const eventQueries = {
   },
   getById: async (id: string) => {
     return await axios.get<GetByIdResponse>(`${BASE_URL}/${id}`);
+  },
+  getStatistics: async () => {
+    return await axios.get<GetStatisticsResponse>(`${BASE_URL}/statistic`);
   },
   addEvent: async (eventData: {
     name: string;

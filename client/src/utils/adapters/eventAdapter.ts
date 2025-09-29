@@ -4,6 +4,8 @@ import {
 } from "@queries/types/event.types";
 import { IEventCardProps } from "@components/EventCard";
 import { IInviteCardProps } from "@components/InviteCard";
+import { IStatCardProps } from "@components/StatCard/StatCard";
+import { Stats } from "@queries/api/eventQueries";
 
 const statusMap: { [key: string]: "pending" | "accepted" | "declined" } = {
   0: "pending",
@@ -52,4 +54,22 @@ export const eventStatusMap: { [key: number]: EventStatus } = {
   0: "active",
   1: "canceled",
   2: "archived",
+};
+
+export const statisticToStatCardProps = (statistic: Stats): IStatCardProps => {
+  return {
+    title: statistic.event.title,
+    location: statistic.event.location,
+    startDate: statistic.event.startDate,
+    participantsCount: {
+      accepted: statistic.acceptedInvitesCount,
+      declined: statistic.declinedInvitesCount,
+      pending: statistic.pendingInvitesCount,
+    },
+  };
+};
+export const statisticsToStatCardProps = (
+  statistics: Stats[]
+): IStatCardProps[] => {
+  return statistics.map(statisticToStatCardProps);
 };

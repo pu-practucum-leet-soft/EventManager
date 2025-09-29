@@ -34,7 +34,7 @@ namespace EventManager.Controllers
         /// <summary>
         /// Създаване на нов потребител
         /// </summary>
-        [HttpPost]
+        [HttpPost("register")]
         [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]

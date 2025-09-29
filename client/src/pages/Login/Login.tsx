@@ -7,18 +7,36 @@ import userQueries from "@queries/api/userQueries";
 import Section from "@components/UI/Section";
 import Button from "@components/UI/Button/Button";
 import styles from "./Login.module.scss";
+import { useQuery } from "@tanstack/react-query";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const { data, isSuccess, isLoading } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const response = await userQueries.refresh();
+      console.log("Refresh response:", response.data);
+
+      return response.data;
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  if (isSuccess && data) {
+    navigate(config.routes.home);
+  }
+  if (isLoading) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    const res = await userQueries.login({ email, password });
 
-    console.log(res.data);
+    await userQueries.login({ email, password });
 
     navigate(config.routes.home);
   };
