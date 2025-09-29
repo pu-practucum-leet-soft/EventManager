@@ -25,7 +25,10 @@ export const modalSlice = createSlice({
       state.type = "cancelEvent";
       state.props = action.payload;
     },
-    openInviteToEventModal: (state, action: PayloadAction<any>) => {
+    openInviteToEventModal: (
+      state,
+      action: PayloadAction<{ eventId: string }>
+    ) => {
       state.type = "inviteToEvent";
       state.props = action.payload;
     },

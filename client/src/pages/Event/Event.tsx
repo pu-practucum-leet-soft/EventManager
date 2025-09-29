@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@redux/store";
 import {
   openCancelEventModal,
   openEditEventModal,
+  openInviteToEventModal,
 } from "@redux/slices/modalSlice";
 import { eventStatusMap } from "@utils/adapters/eventAdapter";
 
@@ -87,6 +88,10 @@ export const EventPage = () => {
     dispatch(openCancelEventModal({ eventId: event.id }));
   };
 
+  const handleInvite = () => {
+    dispatch(openInviteToEventModal({ eventId: event.id }));
+  };
+
   const handleJoin = () => {
     joinMutate.mutate(event.id);
   };
@@ -146,7 +151,7 @@ export const EventPage = () => {
                 variant="primary"
                 color="primary"
                 border="rounded"
-                onClick={handleCancel}
+                onClick={handleInvite}
               >
                 Invite
               </Button>

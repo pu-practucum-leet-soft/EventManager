@@ -6,6 +6,7 @@ import AddEventModal from "./AddEvent";
 import { useAppDispatch, useAppSelector } from "@redux/store";
 import EditEventModal from "./EditModal/EditEvent";
 import CancelEventModal from "./CancelEvent";
+import InviteToEventModal from "./InviteToEvent";
 
 export const BaseModal = () => {
   const dispatch = useAppDispatch();
@@ -33,9 +34,9 @@ export const BaseModal = () => {
     case "cancelEvent":
       content = <CancelEventModal {...props} />;
       break;
-    // case "inviteToEvent":
-    //   content = <InviteToEventModal {...props} />;
-    //   break;
+    case "inviteToEvent":
+      content = <InviteToEventModal {...props} />;
+      break;
     default:
       return null;
   }
