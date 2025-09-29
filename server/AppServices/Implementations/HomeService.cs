@@ -28,34 +28,38 @@ public class HomeService : IHomeService
 
     public async Task<GetHomeResponse> GetHome(Guid userId)
     {
-        var upcomingEvents = await _db.Events
-            .Where(e => e.OwnerUserId == userId)
+        var upcomingEvents = await _db.EventParticipants
+            .Where(e => e.InviteeId == userId
+            && e.Status == InviteStatus.Accepted
+            && e.Event.StartDate > DateTime.UtcNow
+            && e.Event.Status == EventStatus.Active)
             .Select(e => new EventViewModel
             {
-                Id = e.Id,
-                Title = e.Title,
-                Description = e.Description,
-                Location = e.Location,
-                StartDate = e.StartDate,
-                Status = e.Status,
-                OwnerUserId = e.OwnerUserId
+                Id = e.Event.Id,
+                Title = e.Event.Title,
+                Description = e.Event.Description,
+                Location = e.Event.Location,
+                StartDate = e.Event.StartDate,
+                Status = e.Event.Status,
+                OwnerUserId = e.Event.OwnerUserId
             })
             .ToArrayAsync();
 
-        var recentEvents = await _db.Events
-            .Where(e => e.StartDate < DateTime.UtcNow)
-            .Select(e => new EventViewModel
-            {
-                Id = e.Id,
-                Title = e.Title,
-                Description = e.Description,
-                Location = e.Location,
-                StartDate = e.StartDate,
-                Status = e.Status,
-                OwnerUserId = e.OwnerUserId
-            })
-            .ToArrayAsync();
-
+        var recentEventsQuery = await _db.Events
+                            .Where(e => e.StartDate >= DateTime.UtcNow && e.Status == EventStatus.Active)
+                            .Select(e => new EventViewModel
+                            {
+                                Id = e.Id,
+                                Title = e.Title,
+                                Description = e.Description,
+                                Location = e.Location,
+                                StartDate = e.StartDate,
+                                Status = e.Status,
+                                OwnerUserId = e.OwnerUserId
+                            })
+                            .ToArrayAsync();
+        
+        var recentEvents = recentEventsQuery.Reverse().ToArray();
         var invites = await _db.EventParticipants
             .Where(ep => ep.InviteeId == userId && ep.Status == InviteStatus.Invited)
             .Include(ep => ep.Event)

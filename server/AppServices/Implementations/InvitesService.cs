@@ -334,7 +334,7 @@ namespace EventManager.AppServices.Implementations
                 }
 
                 var existing = await _context.EventParticipants
-                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee.Email == inviteeEmail && p.InviterId == inviterId);
+                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee.Email == inviteeEmail);
 
                 //? Идеята е да ограничим други потребители да не могат да изпращат покани на един и същ човек за едно и също събитие
                 //? Но да позволим на потребител да си изпрати покана сам на себе си (т.е. да се запише като участник)
