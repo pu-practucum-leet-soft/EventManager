@@ -5,6 +5,7 @@ export interface AuthState {
   accessToken: string | null;
   user: {
     userId: string;
+    userEmail: string;
     username: string;
   } | null;
 }
@@ -22,7 +23,7 @@ export const authSlice = createSlice({
       state,
       action: PayloadAction<{
         accessToken: string;
-        user: { userId: string; username: string };
+        user: { userId: string; username: string; userEmail: string };
       }>
     ) => {
       state.accessToken = action.payload.accessToken;

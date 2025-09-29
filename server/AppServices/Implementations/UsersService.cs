@@ -82,6 +82,7 @@ namespace EventManager.AppServices.Implementations
 
             return new UserViewModel
             {
+                Id = user.Id,
                 UserName = user.UserName!,
                 Email = user.Email!
             };

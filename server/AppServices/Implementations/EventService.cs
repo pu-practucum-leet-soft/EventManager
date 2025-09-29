@@ -101,6 +101,7 @@ public class EventService : IEventService
             var participantIds = ev.Participants.ToList();
             var owner = new UserViewModel
             {
+                Id = ev.OwnerUserId,
                 UserName = ev.OwnerUser.UserName,
                 Email = ev.OwnerUser.Email,
             };

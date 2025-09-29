@@ -113,7 +113,7 @@ public class EventsController : ControllerBase
         var inviterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var res = await _service.AddParticipants(req, inviterId!);
         return Ok(res);
-    }
+    }    
 
     /// <summary>
     /// Get all events.

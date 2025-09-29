@@ -19,7 +19,7 @@ namespace EventManager.Controllers
         private readonly IInvitesService _service;
         public InvitesController(IInvitesService service) => _service = service;
 
-        
+
         [Authorize]
         [HttpGet]
         [ProducesResponseType(typeof(GetInvitesAllResponse), StatusCodes.Status200OK)]
@@ -29,7 +29,7 @@ namespace EventManager.Controllers
         public async Task<IActionResult> GetAllAsync()
         {
             var meStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(meStr, out var me)) return Unauthorized();   
+            if (!Guid.TryParse(meStr, out var me)) return Unauthorized();
 
             var res = await _service.LoadAllInvitesAsync(me);
             return Ok(res);
@@ -80,10 +80,6 @@ namespace EventManager.Controllers
             return Ok(res);
         }
 
-
-
-
-
         [Authorize]
         [HttpPost("{eventId:guid}/accept")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -108,7 +104,7 @@ namespace EventManager.Controllers
 
 
         [Authorize]
-        [HttpPost("{id:guid}/Declined")]
+        [HttpPost("{eventId:guid}/decline")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -128,7 +124,7 @@ namespace EventManager.Controllers
         }
 
         [Authorize]
-        [HttpPost("add/{eventId:guid}")]
+        [HttpPost("{eventId:guid}/add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -143,14 +139,6 @@ namespace EventManager.Controllers
                     Message = "Липсва валиден потребител."
                 });
 
-            if (req.InviteeId == Guid.Empty)
-            {
-                return BadRequest(new ServiceResponseError
-                {
-                    StatusCode = BusinessStatusCodeEnum.BadRequest,
-                    Message = "Липсва валиден получател."
-                });
-            }
             if (eventId == Guid.Empty)
             {
                 return BadRequest(new ServiceResponseError
@@ -160,7 +148,56 @@ namespace EventManager.Controllers
                 });
             }
 
-            var res = await _service.CreateInviteAsync(eventId, actingUserId, req.InviteeId);
+            Console.WriteLine($"Creating invite to event {eventId} from user {actingUserId} to email {req.InviteeEmail}");
+            var res = await _service.CreateInviteAsync(eventId, actingUserId, req.InviteeEmail);
+
+            if (res.StatusCode == BusinessStatusCodeEnum.NotFound)
+            {
+                return NotFound(res);
+            }
+
+            if (res.StatusCode == BusinessStatusCodeEnum.BadRequest)
+            {
+                return BadRequest(res);
+            }
+
+            if (res.StatusCode == BusinessStatusCodeEnum.Conflict)
+            {
+                return Conflict(res);
+            }
+
+
+            return Ok(res);
+        }
+        
+        [Authorize]
+        [HttpDelete("{eventId:guid}/unattend")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UnattendEventAsync([FromRoute] Guid eventId)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var actingUserId))
+                return Unauthorized(new ServiceResponseError
+                {
+                    StatusCode = BusinessStatusCodeEnum.Unauthorized,
+                    Message = "Липсва валиден потребител."
+                });
+
+            var res = await _service.UnattendEventAsync(eventId, actingUserId);
+
+            if (res.StatusCode == BusinessStatusCodeEnum.NotFound)
+            {
+                return NotFound(res);
+            }
+
+            if (res.StatusCode == BusinessStatusCodeEnum.BadRequest)
+            {
+                return BadRequest(res);
+            }
+
             return Ok(res);
         }
     }

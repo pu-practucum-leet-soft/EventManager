@@ -2,10 +2,10 @@ import { useParams } from "react-router";
 import styles from "./Event.module.scss";
 import Section from "@components/UI/Section/Section";
 import Button from "@components/UI/Button";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import eventQueries from "@queries/api/eventQueries";
 import OwnerOnly from "@components/Auth/OwnerOnly";
-import { useAppDispatch } from "@redux/store";
+import { useAppDispatch, useAppSelector } from "@redux/store";
 import {
   openCancelEventModal,
   openEditEventModal,
@@ -15,6 +15,33 @@ import { eventStatusMap } from "@utils/adapters/eventAdapter";
 export const EventPage = () => {
   const params = useParams();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
+  const user = useAppSelector((state) => state.auth.user);
+
+  const joinMutate = useMutation({
+    mutationFn: async (eventId: string) => {
+      const response = await eventQueries.inviteToEvent(
+        eventId,
+        user!.userEmail
+      );
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event", params.id] });
+    },
+  });
+
+  const unAttendMutate = useMutation({
+    mutationFn: async (eventId: string) => {
+      const response = await eventQueries.unattendEvent(eventId);
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event", params.id] });
+    },
+  });
 
   const {
     data: event,
@@ -59,6 +86,18 @@ export const EventPage = () => {
   const handleCancel = () => {
     dispatch(openCancelEventModal({ eventId: event.id }));
   };
+
+  const handleJoin = () => {
+    joinMutate.mutate(event.id);
+  };
+
+  const handleUnattend = () => {
+    unAttendMutate.mutate(event.id);
+  };
+
+  const shouldDisplayJoin =
+    eventStatusMap[event.status] === "active" &&
+    !event.participants?.some((p) => p.invitee?.userName === user?.username);
 
   return (
     <div className={styles.Event}>
@@ -105,12 +144,33 @@ export const EventPage = () => {
               </OwnerOnly>
               <Button
                 variant="primary"
-                color="secondary"
+                color="primary"
                 border="rounded"
                 onClick={handleCancel}
               >
-                Share Event
+                Invite
               </Button>
+
+              {event.ownerUserId !== user?.userId &&
+                (shouldDisplayJoin ? (
+                  <Button
+                    variant="primary"
+                    color="success"
+                    border="rounded"
+                    onClick={handleJoin}
+                  >
+                    Join
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    color="danger"
+                    border="rounded"
+                    onClick={handleUnattend}
+                  >
+                    Unattend
+                  </Button>
+                ))}
             </div>
           </div>
         </Section>

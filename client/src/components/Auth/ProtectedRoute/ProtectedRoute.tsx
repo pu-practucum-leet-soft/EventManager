@@ -26,13 +26,16 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       const data = response.data;
 
       if (data.token) {
-        const decodedToken: { sub: string; name: string } = jwtDecode(
-          data.token
-        );
+        const decodedToken: { sub: string; name: string; email: string } =
+          jwtDecode(data.token);
         dispatch(
           setCredentials({
             accessToken: data.token,
-            user: { userId: decodedToken.sub, username: decodedToken.name },
+            user: {
+              userId: decodedToken.sub,
+              username: decodedToken.name,
+              userEmail: decodedToken.email,
+            },
           })
         );
       }

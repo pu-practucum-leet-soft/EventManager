@@ -19,7 +19,9 @@ namespace EventManager.AppServices.Interfaces
 
         Task<ServiceResponseBase> DeclineInviteAsync(Guid inviteId, Guid actingUserId);
 
-        Task<ServiceResponseBase> CreateInviteAsync(Guid eventId, Guid inviterId, Guid inviteeId );
+        Task<ServiceResponseBase> CreateInviteAsync(Guid eventId, Guid inviterId, string inviteeEmail);
+
+        Task<ServiceResponseBase> UnattendEventAsync(Guid eventId, Guid userId);
 
     }
 }

@@ -2,6 +2,7 @@ import axios from "@queries/axios";
 import { EventViewModel } from "@queries/types/event.types";
 
 const BASE_URL = `/events`;
+const BASE_URL_INVITES = `/invites`;
 
 type GetAllEventsResponse = {
   events: EventViewModel[];
@@ -41,6 +42,14 @@ const eventQueries = {
   },
   cancelEvent: async (eventId: string) => {
     return await axios.delete(`${BASE_URL}/${eventId}`);
+  },
+  inviteToEvent: (eventId: string, inviteeEmail: string) => {
+    return axios.post(`${BASE_URL_INVITES}/${eventId}/add`, {
+      inviteeEmail: inviteeEmail,
+    });
+  },
+  unattendEvent: (eventId: string) => {
+    return axios.delete(`${BASE_URL_INVITES}/${eventId}/unattend`);
   },
 };
 

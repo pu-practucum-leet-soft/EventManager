@@ -1,4 +1,5 @@
 export type UserViewModel = {
+  Id: number;
   userName: string;
   email: string;
   role: "User" | "Admin";
