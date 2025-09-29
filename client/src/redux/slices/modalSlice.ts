@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface ModalState {
-  type: "addEvent" | "editEvent" | "inviteToEvent" | null;
+  type: "addEvent" | "editEvent" | "inviteToEvent" | "cancelEvent" | null;
   props: any;
 }
 
@@ -16,6 +16,13 @@ export const modalSlice = createSlice({
   reducers: {
     openAddEventModal: (state, action: PayloadAction<any>) => {
       state.type = "addEvent";
+      state.props = action.payload;
+    },
+    openCancelEventModal: (
+      state,
+      action: PayloadAction<{ eventId: string }>
+    ) => {
+      state.type = "cancelEvent";
       state.props = action.payload;
     },
     openInviteToEventModal: (state, action: PayloadAction<any>) => {
@@ -48,6 +55,7 @@ export const {
   openAddEventModal,
   openInviteToEventModal,
   openEditEventModal,
+  openCancelEventModal,
   closeModal,
 } = modalSlice.actions;
 

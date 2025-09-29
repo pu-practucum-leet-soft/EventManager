@@ -6,7 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import eventQueries from "@queries/api/eventQueries";
 import OwnerOnly from "@components/Auth/OwnerOnly";
 import { useAppDispatch } from "@redux/store";
-import { openEditEventModal } from "@redux/slices/modalSlice";
+import {
+  openCancelEventModal,
+  openEditEventModal,
+} from "@redux/slices/modalSlice";
+import { eventStatusMap } from "@utils/adapters/eventAdapter";
 
 export const EventPage = () => {
   const params = useParams();
@@ -37,7 +41,6 @@ export const EventPage = () => {
   if (!event) {
     return <div>No event found</div>;
   }
-  console.log(event);
 
   const handleEdit = () => {
     dispatch(
@@ -53,6 +56,10 @@ export const EventPage = () => {
     );
   };
 
+  const handleCancel = () => {
+    dispatch(openCancelEventModal({ eventId: event.id }));
+  };
+
   return (
     <div className={styles.Event}>
       <h1>{event.title}</h1>
@@ -60,6 +67,12 @@ export const EventPage = () => {
         <Section className={styles.Details}>
           <div className={styles.DetailContent}>
             <p className={styles.Description}>{event.description}</p>
+            {/* TODO: Style this later */}
+            {eventStatusMap[event.status] !== "active" && (
+              <span className={styles.Status}>
+                Status: {eventStatusMap[event.status]}
+              </span>
+            )}
             <p>Location: {event.location}</p>
             <p>
               Start Date:{" "}
@@ -81,11 +94,21 @@ export const EventPage = () => {
                 >
                   Edit Event
                 </Button>
-                <Button variant="primary" color="danger" border="rounded">
-                  Delete Event
+                <Button
+                  variant="primary"
+                  color="danger"
+                  border="rounded"
+                  onClick={handleCancel}
+                >
+                  Cancel Event
                 </Button>
               </OwnerOnly>
-              <Button variant="primary" color="secondary" border="rounded">
+              <Button
+                variant="primary"
+                color="secondary"
+                border="rounded"
+                onClick={handleCancel}
+              >
                 Share Event
               </Button>
             </div>

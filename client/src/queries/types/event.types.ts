@@ -7,6 +7,7 @@ export type EventViewModel = {
   startDate: string; // ISO string
   location: string;
   ownerUserId: string;
+  status: number;
   participants?: EventParticipantViewModel[];
 };
 

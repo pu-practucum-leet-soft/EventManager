@@ -197,6 +197,52 @@ public class EventService : IEventService
     }
 
     /// <summary>
+    /// Cancels an event by changing its status to "Cancelled".
+    /// </summary>
+    /// <param name="eventId">
+    /// The Id of the event to be canceled.
+    /// </param> 
+    /// <param name="userId">
+    /// The Id of the user who is trying to cancel the event.
+    /// </param>
+    /// <returns>The response contains the status of the request and a message to track the process.</returns>
+    /// <response code="200">Returns the requested project board.</response>
+    /// <response code="404">If the project board is not found.</response>
+    /// <response code="403">If the user is not the owner of the event.</response>
+    /// <response code="400">If the event is already canceled.</response>   
+    public async Task<CancelEventResponse> CancelEvent(Guid eventId, Guid userId)
+    {
+        var res = new CancelEventResponse();
+
+        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+        if (ev == null)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.NotFound;
+            return res;
+        }
+
+        if (ev.OwnerUserId != userId)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.Forbidden;
+            return res;
+        }
+
+        if (ev.Status == EventStatus.Cancelled)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.BadRequest;
+            res.Message = "Event is already canceled.";
+            return res;
+        }
+
+        ev.Status = EventStatus.Cancelled;
+        await _db.SaveChangesAsync();
+
+        res.StatusCode = BusinessStatusCodeEnum.Success;
+        res.Message = "Event canceled successfully.";
+        return res;
+    }
+
+    /// <summary>
     /// Gets an event from the database and invites a participant.
     /// </summary>
     /// <param name="req">

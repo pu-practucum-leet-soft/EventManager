@@ -79,6 +79,27 @@ public class EventsController : ControllerBase
     }
 
     /// <summary>
+    /// Cancel existing event.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(CancelEventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+        if(!Guid.TryParse(userId, out var userGuid))
+        {
+            return Unauthorized();
+        }
+
+        var res = await _service.CancelEvent(id, userGuid);
+        return Ok(res);
+    }
+
+    /// <summary>
     /// Add participants to event.
     /// </summary>
     [HttpPost("{id:guid}/participants")]

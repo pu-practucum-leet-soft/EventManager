@@ -1,5 +1,6 @@
 namespace EventManager.AppServices.Interfaces;
 
+using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
 
@@ -27,6 +28,15 @@ public interface IEventService
     /// 
     /// </summary>
     /// <param name="eventId"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    Task<CancelEventResponse> CancelEvent(Guid eventId, Guid userId);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="eventId"></param>
+    /// <param name="userId"></param>
     /// <param name="req"></param>
     /// <returns></returns>
     Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req);

@@ -34,12 +34,13 @@ const eventQueries = {
     location: string;
     startDate: string;
   }) => {
-    console.log(`${BASE_URL}/${eventData.eventId}`);
-    console.log(eventData);
     return await axios.put<EventViewModel>(
       `${BASE_URL}/${eventData.eventId}`,
       eventData
     );
+  },
+  cancelEvent: async (eventId: string) => {
+    return await axios.delete(`${BASE_URL}/${eventId}`);
   },
 };
 

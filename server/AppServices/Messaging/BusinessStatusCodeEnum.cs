@@ -32,6 +32,10 @@
         /// <summary>
         /// 
         /// </summary>
-        BadRequest
+        BadRequest,
+        /// <summary>
+        /// 
+        /// </summary>
+        Forbidden
     }
 }

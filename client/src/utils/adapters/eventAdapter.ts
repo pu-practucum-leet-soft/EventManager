@@ -46,3 +46,10 @@ export const eventViewModelsToCardProps = (
 ): IEventCardProps[] => {
   return events.map(eventViewModelToCardProps);
 };
+
+export type EventStatus = "active" | "canceled" | "archived";
+export const eventStatusMap: { [key: number]: EventStatus } = {
+  0: "active",
+  1: "canceled",
+  2: "archived",
+};
