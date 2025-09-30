@@ -143,6 +143,18 @@ public class EventsController : ControllerBase
         var res = await _service.GetEventStatistic(userId);
         return Ok(res);
     }
+
+    /// <summary>
+    /// Get events with filters.
+    /// </summary>
+    [HttpGet("filter")]
+    [ProducesResponseType(typeof(IEnumerable<GetAllEventsResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)] 
+    public async Task<IActionResult> GetEventsWithFilters([FromQuery] GetEventsWithFiltersRequest req)
+    {
+        var res = await _service.GetEventsWithFilters(req);
+        return Ok(res);
+    }
 }
 
 

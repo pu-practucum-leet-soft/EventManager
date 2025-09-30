@@ -388,4 +388,44 @@ public class EventService : IEventService
 
         return res;
     }
+
+    public async Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req)
+    {
+        var response = new GetAllEventsResponse();
+
+        var query = _db.Events.AsQueryable();
+
+        if (!string.IsNullOrEmpty(req.Title))
+        {
+            query = query.Where(e => e.Title!.Contains(req.Title));
+        }
+
+        if (req.StartDate.HasValue)
+        {
+            query = query.Where(e => e.StartDate >= req.StartDate.Value.Date);
+        }
+
+        if (!string.IsNullOrEmpty(req.Location))
+        {
+            query = query.Where(e => e.Location!.Contains(req.Location));
+        }
+
+        var filteredEvents = await query.AsNoTracking().ToListAsync();
+
+        var eventSummaries = filteredEvents.Select(e => new EventSummary
+        {
+            Id = e.Id,
+            Title = e.Title!,
+            Description = e.Description,
+            StartDate = e.StartDate,
+            OwnerUserId = e.OwnerUserId,
+            Status = e.Status,
+            Location = e.Location,
+            Participants = e.Participants
+        }).ToList();
+
+        response.Events = eventSummaries;
+
+        return response;
+    }
 }

@@ -67,6 +67,9 @@ const eventQueries = {
   unattendEvent: (eventId: string) => {
     return axios.delete(`${BASE_URL_INVITES}/${eventId}/unattend`);
   },
+  filterEvents: (filterQuery: string) => {
+    return axios.get(`${BASE_URL}/filter${filterQuery}`);
+  },
 };
 
 export const eventCacheTags = {

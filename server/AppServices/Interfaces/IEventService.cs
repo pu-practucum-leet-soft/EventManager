@@ -62,4 +62,6 @@ public interface IEventService
     /// <returns></returns>
     Task<StatisticViewModel> GetEventStatistic(Guid ownerId);
     Task<GetByIdResponse> GetEventById(Guid id);
+    
+    Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req);
 }
