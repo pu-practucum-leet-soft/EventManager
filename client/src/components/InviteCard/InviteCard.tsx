@@ -3,6 +3,7 @@ import styles from "./InviteCard.module.scss";
 import invitesQueries, { invitesCacheTags } from "@queries/api/invitesQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { homeCacheTags } from "@queries/api/homeQueries";
+import classNames from "classnames";
 
 export interface IInviteCardProps {
   eventId: string;
@@ -54,7 +55,15 @@ const InviteCard: React.FC<IInviteCardProps> = ({
         <span className={styles.Date}>
           {new Date(startDate).toLocaleDateString()}
         </span>
-        <span>{status}</span>
+        <span
+          className={classNames(styles.Status, {
+            [styles.Accepted]: status === "accepted",
+            [styles.Declined]: status === "declined",
+            [styles.Pending]: status === "pending",
+          })}
+        >
+          {status}
+        </span>
       </div>
     );
   }

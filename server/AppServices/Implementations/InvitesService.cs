@@ -147,7 +147,7 @@ namespace EventManager.AppServices.Implementations
             {
                 var q = _context.EventParticipants
                     .AsNoTracking()
-                    .Where(p => p.InviterId == req.ActingUserId); // OUTGOING: аз съм поканил
+                    .Where(p => p.InviterId == req.ActingUserId && p.InviterId != p.InviteeId); // OUTGOING: аз съм поканил
 
                 // по желание: страниране
                 var page = req.Page < 1 ? 1 : req.Page;
