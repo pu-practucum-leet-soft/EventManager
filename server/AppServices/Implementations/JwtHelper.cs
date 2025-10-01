@@ -124,7 +124,7 @@ namespace EventManager.AppServices.Implementations
             var jwt = await GenerateJwt(storedToken.User!);
 
             storedToken.Revoked = DateTime.UtcNow;
-            storedToken.RevokedByIp = http?.Connection.RemoteIpAddress?.ToString();
+            storedToken.RevokedByIp = http!.Connection.RemoteIpAddress?.ToString();
 
             var refreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(int.Parse(_config["RefreshTokenSettings:ExpiryMinutes"]!));
             var newRefreshToken = new RefreshToken
@@ -139,7 +139,7 @@ namespace EventManager.AppServices.Implementations
             await _context.SaveChangesAsync();
 
 
-            http.Response.Cookies.Append("refresh-token", newRefreshToken.Token, new CookieOptions
+            http!.Response.Cookies.Append("refresh-token", newRefreshToken.Token, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
