@@ -82,11 +82,19 @@
         /// </summary>
         /// <param name="req">Модел с refresh токен.</param>
         /// <returns>Нов JWT токен или грешка при невалиден refresh токен.</returns>
+        //[HttpPost("refresh")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
+        //{
+        //    var res = await _jwtHelper.RenewRefreshToken(req);
+        //    return res.StatusCode == BusinessStatusCodeEnum.Success ? Ok(res) : Unauthorized(res);
+        //}
+
         [HttpPost("refresh")]
         [AllowAnonymous]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
+        public async Task<IActionResult> Refresh()
         {
-            var res = await _jwtHelper.RenewRefreshToken(req);
+            var res = await _jwtHelper.RenewRefreshToken();
             return res.StatusCode == BusinessStatusCodeEnum.Success ? Ok(res) : Unauthorized(res);
         }
 
@@ -139,6 +147,16 @@
             {
                 return NotFound(ex.Message);
             }
+        }
+
+        [HttpPost("{userId}/assign-role")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignRole(Guid userId, [FromQuery] string roleName)
+        {
+            var result = await _service.AssignRole(userId.ToString(), roleName);
+            if (result == "User not found") return NotFound(result);
+
+            return Ok(new { message = result });
         }
     }
 }

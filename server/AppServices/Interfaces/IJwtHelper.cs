@@ -22,7 +22,7 @@
         /// </summary>
         /// <param name="req">Заявка, съдържаща стария Refresh токен.</param>
         /// <returns>Отговор със статус и информация за новите токени.</returns>
-        Task<RefreshTokenResponse> RenewRefreshToken(RefreshRequest req);
+        Task<RefreshTokenResponse> RenewRefreshToken(/*RefreshRequest req*/);
 
         /// <summary>
         /// Потвърждава, че даден Refresh токен е бил отнет (revoked),

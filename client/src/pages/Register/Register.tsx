@@ -3,7 +3,7 @@ import Button from "@components/UI/Button";
 
 import { Link, useNavigate } from "react-router";
 import styles from "./Register.module.scss";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import userQueries from "@queries/api/userQueries";
 import config from "@config";
 import { useQuery } from "@tanstack/react-query";
@@ -22,25 +22,26 @@ const RegisterPage = () => {
     refetchOnWindowFocus: false,
   });
 
-  if (isSuccess && data) {
-    navigate(config.routes.home);
-  }
-  if (isLoading) {
-    return null;
-  }
-
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     email: "",
     userName: "",
     password: "",
     repassword: "",
   });
 
+    useEffect(() => {
+    if (isSuccess && data) {
+      navigate(config.routes.home);
+    }
+  }, [isSuccess, data, navigate]);
+
+  if (isLoading) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     await userQueries.register(formData);
-
     navigate(config.routes.home);
   };
 

@@ -94,7 +94,7 @@ namespace EventManager.AppServices.Implementations
         /// </summary>
         /// <param name="req">Заявка, съдържаща текущия Refresh токен.</param>
         /// <returns>Отговор със статус и нов Refresh токен.</returns>
-        public async Task<RefreshTokenResponse> RenewRefreshToken(RefreshRequest req)
+        public async Task<RefreshTokenResponse> RenewRefreshToken()
         {
             var response = new RefreshTokenResponse();
             var http = _httpContextAccessor.HttpContext;
