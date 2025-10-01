@@ -190,6 +190,27 @@ namespace EventManager
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
                 await RoleDataSeeder.SeedRolesAsync(roleManager);
+
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+
+                var adminEmail = "admin@eventmanager.com";
+                var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+                if (adminUser == null)
+                {
+                    var user = new User
+                    {
+                        UserName = "admin",
+                        Email = adminEmail
+                    };
+
+                    // !Важно: сложи силна парола за демонстрацията
+                    var result = await userManager.CreateAsync(user, "Admin123!");
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(user, "Admin");
+                    }
+                }
             }
 
             await app.RunAsync();

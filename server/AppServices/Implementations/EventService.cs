@@ -281,7 +281,7 @@ public class EventService : IEventService
     {
         var response = new GetAllEventsResponse();
 
-        var q = await _db.Events.AsNoTracking().ToListAsync();
+        var q = await _db.Events.AsNoTracking().Where(x => x.Status == EventStatus.Active).ToListAsync();
 
         var allEventsList = q.Select(e => new EventSummary
         {
@@ -293,7 +293,9 @@ public class EventService : IEventService
             Status = e.Status,
             Location = e.Location,
             Participants = e.Participants
-        }).ToList();
+        })
+            .OrderBy(x => x.StartDate)
+            .ToList();
 
         response.Events = allEventsList;
 
@@ -386,7 +388,7 @@ public class EventService : IEventService
     {
         var response = new GetAllEventsResponse();
 
-        var query = _db.Events.AsQueryable();
+        var query = _db.Events.AsQueryable().Where(x=> x.Status == EventStatus.Active);
 
         if (!string.IsNullOrEmpty(req.Title))
         {
@@ -395,7 +397,7 @@ public class EventService : IEventService
 
         if (req.StartDate.HasValue)
         {
-            query = query.Where(e => e.StartDate >= req.StartDate.Value.Date);
+            query = query.Where(e => e.StartDate == req.StartDate.Value.Date);
         }
 
         if (!string.IsNullOrEmpty(req.Location))
