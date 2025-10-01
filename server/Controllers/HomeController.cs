@@ -21,6 +21,7 @@ namespace EventManager.Controllers
         /// <summary>
         /// Създава нов екземпляр на <see cref="HomeController"/>.
         /// </summary>
+        /// <param name="service">Услуга, която дава контрол над свойствата на <i>home</i>.</param>
         /// <param name="logger">Логер за записване на системни съобщения.</param>
         public HomeController(IHomeService service, ILogger<HomeController> logger)
         {

@@ -13,30 +13,40 @@ using Microsoft.EntityFrameworkCore;
 namespace EventManager.AppServices.Implementations;
 
 /// <summary>
-/// Service for home page functionality
+/// Сървис, който предоставя функционалности за началната страница на приложението.
+/// Използва базата данни за извличане на предстоящи събития, скорошни събития и покани
+/// за даден потребител.
 /// </summary>
 public class HomeService : IHomeService
 {
     private readonly EventManagerDbContext _db;
     private readonly ILogger<IHomeService> _logger;
 
+    /// <summary>
+    /// Конструктор за инициализиране на <see cref="HomeService"/>.
+    /// </summary>
+    /// <param name="db">Контекст за достъп до базата данни <see cref="EventManagerDbContext"/>.</param>
+    /// <param name="logger">Логър за проследяване на събития и грешки.</param>
     public HomeService(EventManagerDbContext db, ILogger<IHomeService> logger)
     {
         _db = db;
         _logger = logger;
     }
 
+    /// <summary>Извлича данните за началната страница на даден потребител</summary>
+    /// <param name="userId">Уникалният идентификатор на потребителя (<see cref="Guid"/>).</param>
+    /// <returns>Обект от тип <see cref="GetHomeResponse"/></returns>
     public async Task<GetHomeResponse> GetHome(Guid userId)
     {
         var upcomingEvents = await _db.EventParticipants
             .Where(e => e.InviteeId == userId
             && e.Status == InviteStatus.Accepted
-            && e.Event.StartDate > DateTime.UtcNow
+            && e.Event!.StartDate > DateTime.UtcNow
             && e.Event.Status == EventStatus.Active)
             .Select(e => new EventViewModel
             {
-                Id = e.Event.Id,
-                Title = e.Event.Title,
+                Id = e.Event!.Id,
+                Title = e.Event.Title!,
                 Description = e.Event.Description,
                 Location = e.Event.Location,
                 StartDate = e.Event.StartDate,
@@ -50,7 +60,7 @@ public class HomeService : IHomeService
                             .Select(e => new EventViewModel
                             {
                                 Id = e.Id,
-                                Title = e.Title,
+                                Title = e.Title!,
                                 Description = e.Description,
                                 Location = e.Location,
                                 StartDate = e.StartDate,
@@ -69,8 +79,8 @@ public class HomeService : IHomeService
                 Id = ep.Id,
                 Event = new EventViewModel
                 {
-                    Id = ep.Event.Id,
-                    Title = ep.Event.Title,
+                    Id = ep.Event!.Id,
+                    Title = ep.Event.Title!,
                     Description = ep.Event.Description,
                     Location = ep.Event.Location,
                     StartDate = ep.Event.StartDate,
@@ -79,7 +89,7 @@ public class HomeService : IHomeService
                 },
                 Inviter = new UserViewModel
                 {
-                    UserName = ep.Inviter.UserName,
+                    UserName = ep.Inviter!.UserName,
                     Email = ep.Inviter.Email
 
                 },

@@ -13,7 +13,7 @@
         /// <summary>
         /// Съобщение, описващо резултата от опита за вход.
         /// </summary>
-        public string? Message { get; set; }
+        public new string? Message { get; set; }
 
         /// <summary>
         /// Потребителското име на автентикирания потребител.

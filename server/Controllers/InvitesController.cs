@@ -11,15 +11,26 @@ using System.Security.Claims;
 
 namespace EventManager.Controllers
 {
+    /// <summary>
+    /// API контролер за управление на покани към събития.
+    /// Предоставя функционалности за извличане, създаване, приемане, отказване и отписване от събития.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class InvitesController : ControllerBase
     {
-
         private readonly IInvitesService _service;
+
+        /// <summary>
+        /// Конструктор за инициализация на <see cref="InvitesController"/>.
+        /// </summary>
+        /// <param name="service">Сървис за управление на покани.</param>
         public InvitesController(IInvitesService service) => _service = service;
 
-
+        /// <summary>
+        /// Връща всички покани на текущо автентикирания потребител (входящи и изходящи).
+        /// </summary>
+        /// <returns><see cref="GetInvitesAllResponse"/> със списък от покани.</returns>
         [Authorize]
         [HttpGet]
         [ProducesResponseType(typeof(GetInvitesAllResponse), StatusCodes.Status200OK)]
@@ -35,6 +46,12 @@ namespace EventManager.Controllers
             return Ok(res);
         }
 
+        /// <summary>
+        /// Връща входящите покани за текущо автентикирания потребител.
+        /// </summary>
+        /// <param name="page">Номер на страница (по подразбиране 1).</param>
+        /// <param name="pageSize">Брой резултати на страница (по подразбиране 20).</param>
+        /// <returns><see cref="GetInvitesIncomingResponse"/> със списък от входящи покани.</returns>
         [Authorize]
         [HttpGet("incoming")]
         [ProducesResponseType(typeof(GetInvitesIncomingResponse), StatusCodes.Status200OK)]
@@ -58,7 +75,12 @@ namespace EventManager.Controllers
         }
 
 
-
+        /// <summary>
+        /// Връща изходящите покани за текущо автентикирания потребител.
+        /// </summary>
+        /// <param name="page">Номер на страница (по подразбиране 1).</param>
+        /// <param name="pageSize">Брой резултати на страница (по подразбиране 20).</param>
+        /// <returns><see cref="GetInvitesOutcomingResponse"/> със списък от изходящи покани.</returns>
         [Authorize]
         [HttpGet("outcoming")]
         [ProducesResponseType(typeof(GetInvitesIncomingResponse), StatusCodes.Status200OK)]
@@ -80,6 +102,11 @@ namespace EventManager.Controllers
             return Ok(res);
         }
 
+        /// <summary>
+        /// Приема покана за участие в събитие от името на текущия потребител.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <returns>HTTP 200 със статус на операцията или грешка при неуспех.</returns>
         [Authorize]
         [HttpPost("{eventId:guid}/accept")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -102,7 +129,11 @@ namespace EventManager.Controllers
 
 
 
-
+        /// <summary>
+        /// Отказва покана за участие в събитие от името на текущия потребител.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <returns>HTTP 200 със статус на операцията или грешка при неуспех.</returns>
         [Authorize]
         [HttpPost("{eventId:guid}/decline")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -123,6 +154,12 @@ namespace EventManager.Controllers
             return Ok(res);
         }
 
+        /// <summary>
+        /// Създава нова покана за събитие от името на текущия потребител.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <param name="req">Заявка с имейл на поканения потребител.</param>
+        /// <returns>HTTP 200 при успех или грешка (404, 400, 409).</returns>
         [Authorize]
         [HttpPost("{eventId:guid}/add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -149,7 +186,7 @@ namespace EventManager.Controllers
             }
 
             Console.WriteLine($"Creating invite to event {eventId} from user {actingUserId} to email {req.InviteeEmail}");
-            var res = await _service.CreateInviteAsync(eventId, actingUserId, req.InviteeEmail);
+            var res = await _service.CreateInviteAsync(eventId, actingUserId, req.InviteeEmail!);
 
             if (res.StatusCode == BusinessStatusCodeEnum.NotFound)
             {
@@ -169,7 +206,12 @@ namespace EventManager.Controllers
 
             return Ok(res);
         }
-        
+
+        /// <summary>
+        /// Отписва текущия потребител от събитие, като отказва всички негови активни покани.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <returns>HTTP 200 при успех или грешка при неуспех.</returns>
         [Authorize]
         [HttpDelete("{eventId:guid}/unattend")]
         [ProducesResponseType(StatusCodes.Status200OK)]

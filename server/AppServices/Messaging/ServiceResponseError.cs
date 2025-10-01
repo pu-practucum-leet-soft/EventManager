@@ -26,6 +26,6 @@ namespace EventManager.AppServices.Messaging
         /// <summary>
         /// Съобщение за грешка, което може да бъде показано на потребителя.
         /// </summary>
-        public string? Message { get; set; }
+        public new string? Message { get; set; }
     }
 }

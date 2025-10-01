@@ -30,9 +30,18 @@ public interface IEventService
     /// Редактира вече съществуващо събитие.
     /// </summary>
     /// <param name="eventId">Идентификатор на събитието за редакция.</param>
+    /// <param name="userId">Идентификатор на потребителя, който прави редакция.</param>
     /// <param name="req">Заявка с новите данни за събитието.</param>
     /// <returns>Резултат дали редакцията е успешна.</returns>
-    Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req);
+    Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req);
+
+    /// <summary>
+    /// Маркира събитие като отказано.
+    /// </summary>
+    /// <param name="eventId">Уникален идентификатор на събитието, което ще бъде отказано.</param>
+    /// <param name="userId">Идентификатор на потребителя, който отказва събитето.</param>
+    /// <returns>Резултат с информация за операцията.</returns>
+    Task<CancelEventResponse> CancelEvent(Guid eventId, Guid userId);
 
     /// <summary>
     /// Добавя участници към събитие.
@@ -54,7 +63,18 @@ public interface IEventService
     /// <param name="ownerId">Идентификатор на собственика на събитията.</param>
     /// <returns>Статистически данни за събитията на собственика.</returns>
     Task<StatisticViewModel> GetEventStatistic(Guid ownerId);
+
+    /// <summary>
+    /// Връща събитие по зададен идентификатор.
+    /// </summary>
+    /// <param name="id">Уникален идентификатор на събитието.</param>
+    /// <returns><see cref="GetByIdResponse"/> със съдържание на събитието или статус NotFound при липса.</returns>
     Task<GetByIdResponse> GetEventById(Guid id);
-    
+
+    /// <summary>
+    /// Връща списък от събития, като прилага филтри по заглавие, дата или локация.
+    /// </summary>
+    /// <param name="req">Заявка, съдържаща филтри за заглавие, начална дата и местоположение.</param>
+    /// <returns><see cref="GetAllEventsResponse"/> със списък от събития, отговарящи на филтрите.</returns>
     Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req);
 }

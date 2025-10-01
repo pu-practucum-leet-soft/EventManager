@@ -12,6 +12,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.AppServices.Implementations
 {
+    /// <summary>
+    /// Сървис за управление на покани към събития.
+    /// Отговаря за бизнес логиката, свързана с изпращане, приемане, отказване и извличане на покани.
+    /// </summary>
     public class InvitesService : IInvitesService
     {
 
@@ -19,12 +23,22 @@ namespace EventManager.AppServices.Implementations
         private readonly EventManagerDbContext _context;
         private readonly ILogger<InvitesService> _logger;
 
+        /// <summary>
+        /// Конструктор за инициализация на <see cref="InvitesService"/>.
+        /// </summary>
+        /// <param name="db">Контекст за работа с базата данни.</param>
+        /// <param name="logger">Логър за проследяване на грешки и действия.</param>
         public InvitesService(EventManagerDbContext db, ILogger<InvitesService> logger)
         {
             _logger = logger;
             _context = db;
         }
 
+        /// <summary>
+        /// Зарежда всички покани за потребителя – както входящи (получени), така и изходящи (изпратени).
+        /// </summary>
+        /// <param name="userId">Идентификатор на потребителя.</param>
+        /// <returns><see cref="GetInvitesAllResponse"/> с пълен списък от покани.</returns>
         public async Task<GetInvitesAllResponse> LoadAllInvitesAsync(Guid userId)
         {
             var response = new GetInvitesAllResponse();
@@ -75,6 +89,13 @@ namespace EventManager.AppServices.Implementations
 
             return response;
         }
+
+        /// <summary>
+        /// Зарежда входящите покани за даден потребител (получени покани).
+        /// Поддържа страниране чрез <c>Page</c> и <c>PageSize</c>.
+        /// </summary>
+        /// <param name="req">Заявка с информация за потребител и страниране.</param>
+        /// <returns><see cref="GetInvitesIncomingResponse"/> със списък от входящи покани.</returns>
         public async Task<GetInvitesIncomingResponse> LoadInvitesIncomingAsync(GetInvitesIncomingRequest req)
         {
             var response = new GetInvitesIncomingResponse();
@@ -91,8 +112,8 @@ namespace EventManager.AppServices.Implementations
                 response.Total = await q.CountAsync();
 
                 var items = await q
-                    .OrderByDescending(p => p.Event.StartDate)
-                    .Where(p => p.Event.Status == EventStatus.Active)
+                    .OrderByDescending(p => p.Event!.StartDate)
+                    .Where(p => p.Event!.Status == EventStatus.Active)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(p => new EventParticipantViewModel
@@ -100,7 +121,7 @@ namespace EventManager.AppServices.Implementations
                         Event = new EventViewModel
                         {
                             Id = p.EventId,
-                            Title = p.Event.Title,
+                            Title = p.Event!.Title!,
                             Description = p.Event.Description,
                             StartDate = p.Event.StartDate,
                             Location = p.Event.Location,
@@ -137,7 +158,12 @@ namespace EventManager.AppServices.Implementations
             return response;
         }
 
-
+        /// <summary>
+        /// Зарежда изходящите покани за даден потребител (изпратени от него).
+        /// Поддържа страниране чрез <c>Page</c> и <c>PageSize</c>.
+        /// </summary>
+        /// <param name="req">Заявка с информация за потребител и страниране.</param>
+        /// <returns><see cref="GetInvitesOutcomingResponse"/> със списък от изходящи покани.</returns>
         public async Task<GetInvitesOutcomingResponse> LoadInvitesOutcomingAsync(GetInvitesOutcomingRequest req)
         {
 
@@ -156,7 +182,7 @@ namespace EventManager.AppServices.Implementations
                 response.Total = await q.CountAsync();
 
                 var items = await q
-                    .OrderByDescending(p => p.Event.StartDate)
+                    .OrderByDescending(p => p.Event!.StartDate)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(p => new EventParticipantViewModel
@@ -164,7 +190,7 @@ namespace EventManager.AppServices.Implementations
                         Event = new EventViewModel
                         {
                             Id = p.EventId,
-                            Title = p.Event.Title,
+                            Title = p.Event!.Title!,
                             Description = p.Event.Description,
                             StartDate = p.Event.StartDate,
                             Location = p.Event.Location,
@@ -202,7 +228,12 @@ namespace EventManager.AppServices.Implementations
         }
 
 
-
+        /// <summary>
+        /// Приема покана за дадено събитие от името на потребителя.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <param name="actingUserId">Идентификатор на потребителя, който приема поканата.</param>
+        /// <returns><see cref="ServiceResponseBase"/> със статус на операцията.</returns>
         public async Task<ServiceResponseBase> AcceptInviteAsync(Guid eventId, Guid actingUserId)
         {
             var response = new ServiceResponseBase();
@@ -243,6 +274,12 @@ namespace EventManager.AppServices.Implementations
             return response;
         }
 
+        /// <summary>
+        /// Отказва покана за дадено събитие от името на потребителя.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <param name="actingUserId">Идентификатор на потребителя, който отказва поканата.</param>
+        /// <returns><see cref="ServiceResponseBase"/> със статус на операцията.</returns>
         public async Task<ServiceResponseBase> DeclineInviteAsync(Guid eventId, Guid actingUserId)
         {
             var response = new ServiceResponseBase();
@@ -283,7 +320,14 @@ namespace EventManager.AppServices.Implementations
             return response;
         }
 
-
+        /// <summary>
+        /// Създава нова покана за събитие от името на поканител към избран потребител.
+        /// Ако поканителят и поканеният са един и същ потребител, поканата се приема автоматично.
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <param name="inviterId">Идентификатор на поканителя.</param>
+        /// <param name="inviteeEmail">Имейл на поканения потребител.</param>
+        /// <returns><see cref="ServiceResponseBase"/> със статус на операцията.</returns>
         public async Task<ServiceResponseBase> CreateInviteAsync(Guid eventId, Guid inviterId, string inviteeEmail)
         {
             var response = new ServiceResponseBase();
@@ -324,7 +368,7 @@ namespace EventManager.AppServices.Implementations
                 }
 
                 var attending = await _context.EventParticipants
-                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee.Email == inviteeEmail && p.Status == InviteStatus.Accepted);
+                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee!.Email == inviteeEmail && p.Status == InviteStatus.Accepted);
 
                 if (attending != null)
                 {
@@ -334,7 +378,7 @@ namespace EventManager.AppServices.Implementations
                 }
 
                 var existing = await _context.EventParticipants
-                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee.Email == inviteeEmail);
+                    .FirstOrDefaultAsync(p => p.EventId == eventId && p.Invitee!.Email == inviteeEmail);
 
                 //? Идеята е да ограничим други потребители да не могат да изпращат покани на един и същ човек за едно и също събитие
                 //? Но да позволим на потребител да си изпрати покана сам на себе си (т.е. да се запише като участник)
@@ -380,6 +424,12 @@ namespace EventManager.AppServices.Implementations
                 return response;
         }
 
+        /// <summary>
+        /// Отписва потребителя от дадено събитие, като променя статуса на всички негови активни покани на "Declined".
+        /// </summary>
+        /// <param name="eventId">Идентификатор на събитието.</param>
+        /// <param name="userId">Идентификатор на потребителя.</param>
+        /// <returns><see cref="ServiceResponseBase"/> със статус на операцията.</returns>
         public async Task<ServiceResponseBase> UnattendEventAsync(Guid eventId, Guid userId)
         {
             var response = new ServiceResponseBase();

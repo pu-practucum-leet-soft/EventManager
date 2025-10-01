@@ -118,6 +118,11 @@ public class EventService : IEventService
         }
     }
 
+    /// <summary>
+    /// Извлича събитие от базата данни по неговия идентификатор.
+    /// </summary>
+    /// <param name="id">Уникален идентификатор (<see cref="Guid"/>) на събитието, което трябва да бъде намерено.</param>
+    /// <returns>Обект от тип <see cref="GetByIdResponse"/></returns>
     public async Task<GetByIdResponse> GetEventById(Guid id)
     {
         var res = new GetByIdResponse();
@@ -140,14 +145,14 @@ public class EventService : IEventService
             .ToList();
         var owner = new UserViewModel
         {
-            UserName = ev.OwnerUser.UserName,
+            UserName = ev.OwnerUser!.UserName,
             Email = ev.OwnerUser.Email,
         };
 
         res.Event = new EventViewModel
         {
             Id = ev.Id,
-            Title = ev.Title,
+            Title = ev.Title!,
             Description = ev.Description,
             StartDate = ev.StartDate,
             Location = ev.Location,
@@ -163,9 +168,10 @@ public class EventService : IEventService
     /// Редактира съществуващо събитие.
     /// </summary>
     /// <param name="eventId">Идентификатор на събитието за редакция.</param>
+    /// <param name="userId">Идентификатор на потребителя, който прави редакция.</param>
     /// <param name="req">Заявка с новите данни за събитието.</param>
     /// <returns>Отговор със статус за успешна редакция.</returns>
-    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
+    public async Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req)
     {
         Console.WriteLine($"Editing event {eventId} by user {userId}");
         var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
@@ -373,6 +379,9 @@ public class EventService : IEventService
         return res;
     }
 
+    /// <summary>Извлича всички събития от базата данни, като прилага зададени филтри.</summary>
+    /// <param name="req">Обект от тип <see cref="GetEventsWithFiltersRequest"/>, съдържащ критерии за филтриране</param>
+    /// <returns>Обект от тип <see cref="GetAllEventsResponse"/>,</returns>
     public async Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req)
     {
         var response = new GetAllEventsResponse();

@@ -13,7 +13,7 @@
         /// <summary>
         /// Информационно съобщение за резултата от операцията.
         /// </summary>
-        public string? Message { get; set; }
+        public new string? Message { get; set; }
 
         /// <summary>
         /// Генерираният JWT токен като низ.
