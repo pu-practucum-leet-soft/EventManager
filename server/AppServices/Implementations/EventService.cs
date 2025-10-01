@@ -11,8 +11,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.AppServices.Implementations;
+
 /// <summary>
-/// Serves to contain the business logic for handling the events.
+/// Сервизен клас, който съдържа бизнес логиката за управление на събития.
+/// Отговаря за създаване, редакция, покани и статистики.
 /// </summary>
 public class EventService : IEventService
 {
@@ -20,7 +22,8 @@ public class EventService : IEventService
     private readonly ILogger<EventService> _logger;
 
     /// <summary>
-    /// The EventService constructor serves to instantiate the service and inject the needed dependencies.
+    /// Конструктор, който инициализира <see cref="EventService"/> 
+    /// и инжектира необходимите зависимости.
     /// </summary>
     public EventService(EventManagerDbContext db, ILogger<EventService> logger)
     {
@@ -29,16 +32,11 @@ public class EventService : IEventService
     }
 
     /// <summary>
-    /// The CreateEvent method delivers customer data from the client side uses it to instatiate the Event entity that is being persisted into the storage.
+    /// Създава ново събитие в базата данни.
     /// </summary>
-    /// <param name="req">
-    /// The CreateEventRequest is a view model that contais user defined data with details about a new event. 
-    /// It acts as a mediator for transferring the creation data.
-    /// </param> 
-    /// <param name="userId">
-    /// The userId parameter is extracted from the UserManager service in the Controller Action and passed to the method.
-    /// </param>
-    /// <returns>The CreateEventResponse view model containing the status of the request and a message to track the process.</returns>
+    /// <param name="req">Модел със заявка за създаване на събитие.</param>
+    /// <param name="userId">Идентификатор на потребителя-собственик.</param>
+    /// <returns>Отговор със статус за резултата от създаването.</returns>
     public async Task<CreateEventResponse> CreateEvent([FromBody] CreateEventRequest req, string userId)
     {
         var res = new CreateEventResponse();
@@ -81,14 +79,10 @@ public class EventService : IEventService
     }
 
     /// <summary>
-    /// Provides access to the database and queries for a single event called by the client.
+    /// Връща данни за конкретно събитие по неговото Id.
     /// </summary>
-    /// <param name="req">
-    /// Contains the Event Id used to query the Events table.
-    /// </param> 
-    /// <returns>EventViewModel that contains the main event data along with the contact information of the event owner.</returns>
-    /// <response code="200">Returns the requested project board.</response>
-    /// <response code="404">If the project board is not found.</response>
+    /// <param name="req">Заявка, съдържаща идентификатора на събитието.</param>
+    /// <returns><see cref="EventViewModel"/> с основните данни за събитието и участниците.</returns>
     public async Task<EventViewModel> GetEvent(GetEventRequest req)
     {
         var ev = await _db.Events
@@ -166,17 +160,12 @@ public class EventService : IEventService
      }
 
     /// <summary>
-    /// Provides access to an event and changes the contents of the event data.
+    /// Редактира съществуващо събитие.
     /// </summary>
-    /// <param name="eventId"> </param> 
-    /// <param name="userId"> </param> 
-    /// <param name="req">
-    /// Conains the event data to be passed to the database entity.
-    /// </param> 
-    /// <returns>EditEventResponse returns a message signifying the completion of the request.</returns>
-    /// <response code="200">Returns the requested project board.</response>
-    /// <response code="404">If the project board is not found.</response>
-    public async Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req)
+    /// <param name="eventId">Идентификатор на събитието за редакция.</param>
+    /// <param name="req">Заявка с новите данни за събитието.</param>
+    /// <returns>Отговор със статус за успешна редакция.</returns>
+    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
     {
         Console.WriteLine($"Editing event {eventId} by user {userId}");
         var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
@@ -244,15 +233,11 @@ public class EventService : IEventService
     }
 
     /// <summary>
-    /// Gets an event from the database and invites a participant.
+    /// Добавя участници към дадено събитие.
     /// </summary>
-    /// <param name="req">
-    /// Sends data from the client about the participants who are to be invited to the event.
-    /// </param> 
-    /// <param name="inviterId">
-    /// Contains the Id of the user who is sends the invites.
-    /// </param> 
-    /// <returns>The response contains the number of invited users.</returns>
+    /// <param name="req">Заявка със списък от Id-та на потребители за покана.</param>
+    /// <param name="inviterId">Идентификатор на потребителя, който изпраща поканите.</param>
+    /// <returns>Отговор със стойност колко участници са били добавени.</returns>
     public async Task<AddParticipantsResponse> AddParticipants(AddParticipantsRequest req, string inviterId)
     {
         var ev = await _db.Events.Include(e => e.Participants).FirstOrDefaultAsync(e => e.Id == req.EventId);
@@ -283,9 +268,9 @@ public class EventService : IEventService
     }
 
     /// <summary>
-    /// The method calls all created events and returns them to the client.
+    /// Връща списък с всички събития от системата.
     /// </summary>
-    /// <returns>The GetAllEventsResponse returns the collected events from the database.</returns>
+    /// <returns><see cref="GetAllEventsResponse"/> с колекция от събития.</returns>                                                      
     public async Task<GetAllEventsResponse> GetAllEvents()
     {
         var response = new GetAllEventsResponse();
@@ -311,12 +296,11 @@ public class EventService : IEventService
 
 
     /// <summary>
-    /// Calculates the a statistic about events' count and the percentage of participants who accepted their invites.
+    /// Генерира статистика за събития на конкретен потребител,
+    /// включително проценти на приети/отказани/висящи покани.
     /// </summary>
-    /// <param name="ownerId">
-    /// A Guid of the owner of the event/s
-    /// </param> 
-    /// <returns>The view modal with the calculated data and additional information.</returns>
+    /// <param name="ownerId">Идентификатор на собственика на събитията.</param>
+    /// <returns><see cref="StatisticViewModel"/> със статистическите данни.</returns>
     public async Task<StatisticViewModel> GetEventStatistic(Guid ownerId)
     {
         var ownerEvents = await _db.Events

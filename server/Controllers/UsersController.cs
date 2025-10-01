@@ -1,17 +1,17 @@
-﻿using EventManager.AppServices.Interfaces;
-using EventManager.AppServices.Messaging;
-using EventManager.AppServices.Messaging.Requests.UserRequests;
-using EventManager.AppServices.Messaging.Responses.UserResponses;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using RefreshRequest = EventManager.AppServices.Messaging.Requests.UserRequests.RefreshRequest;
-
-namespace EventManager.Controllers
+﻿namespace EventManager.Controllers
 {
+    using EventManager.AppServices.Interfaces;
+    using EventManager.AppServices.Messaging;
+    using EventManager.AppServices.Messaging.Requests.UserRequests;
+    using EventManager.AppServices.Messaging.Responses.UserResponses;
+    using EventManager.Data.Entities;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Security.Claims;
+
     /// <summary>
-    /// 
+    /// Контролер за управление на потребители.
+    /// Предоставя функционалности за регистрация, вход, изход, освежаване на токени и достъп до информация за текущия потребител.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -21,10 +21,10 @@ namespace EventManager.Controllers
         private readonly IJwtHelper _jwtHelper;
 
         /// <summary>
-        /// 
+        /// Инициализира нов контролер за работа с потребители.
         /// </summary>
-        /// <param name="service"></param>
-        /// <param name="jwtHelper"></param>
+        /// <param name="service">Сървис за бизнес логиката, свързана с потребители.</param>
+        /// <param name="jwtHelper">Помощен клас за работа с JWT токени.</param>
         public UsersController(IUsersService service, IJwtHelper jwtHelper)
         {
             _service = service;
@@ -32,8 +32,10 @@ namespace EventManager.Controllers
         }
 
         /// <summary>
-        /// Създаване на нов потребител
+        /// Създава нов потребител в системата.
         /// </summary>
+        /// <param name="model">Модел с данни за създаване на нов потребител.</param>
+        /// <returns>Информация за резултата от създаването.</returns>
         [HttpPost("register")]
         [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -50,11 +52,12 @@ namespace EventManager.Controllers
 
             return Ok(response);
         }
+
         /// <summary>
-        /// 
+        /// Вход на потребител със зададени имейл и парола.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="request">Данни за вход - имейл и парола.</param>
+        /// <returns>JWT токен и информация за потребителя.</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
@@ -73,11 +76,12 @@ namespace EventManager.Controllers
                 user = new { res.UserName, res.Email, res.Role }
             });
         }
+
         /// <summary>
-        /// 
+        /// Обновява JWT токена чрез подаден refresh токен.
         /// </summary>
-        /// <param name="req"></param>
-        /// <returns></returns>
+        /// <param name="req">Модел с refresh токен.</param>
+        /// <returns>Нов JWT токен или грешка при невалиден refresh токен.</returns>
         [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
@@ -87,9 +91,8 @@ namespace EventManager.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Изход на текущия потребител и анулиране на неговите токени.
         /// </summary>
-        /// <returns></returns>
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -98,9 +101,9 @@ namespace EventManager.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Връща информация за текущо автентикирания потребител.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Идентификатор и роля на потребителя.</returns>
         [HttpGet("me")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -110,7 +113,6 @@ namespace EventManager.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var role = User.FindFirstValue(ClaimTypes.Role);
 
-
             return Ok(new
             {
                 UserId = userId,
@@ -119,10 +121,10 @@ namespace EventManager.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Намира потребител по имейл.
         /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
+        /// <param name="email">Имейл на потребителя.</param>
+        /// <returns>Идентификатор на намерения потребител или грешка 404.</returns>
         [HttpGet("by-email")]
         [ProducesResponseType(typeof(UserIdResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -138,26 +140,5 @@ namespace EventManager.Controllers
                 return NotFound(ex.Message);
             }
         }
-
-        //[HttpPost("refresh-token")]
-        //public async Task<IActionResult> RefreshToken()
-        //{
-        //    var refreshToken = Request.Cookies["refresh-token"];
-        //    if (refreshToken == null) return Unauthorized();
-        //    var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-
-        //    var refreshTokenRenual = await _jwtHelper.RenewRefreshToken();
-        //    // върни новото cookie
-        //    Response.Cookies.Append("refresh-token", refreshTokenRenual.Token, new CookieOptions
-        //    {
-        //        HttpOnly = true,
-        //        Secure = true,
-        //        SameSite = SameSiteMode.Strict,
-        //        Expires = refreshTokenRenual.TokenExpiryTime
-        //    });
-
-        //    return Ok(new { token = refreshTokenRenual });
-        //}
-
     }
 }
