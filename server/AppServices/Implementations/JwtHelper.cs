@@ -16,7 +16,8 @@ namespace EventManager.AppServices.Implementations
 {
 
     /// <summary>
-    /// The service works with JWT initializers and credentials.
+    /// Сервизен клас, който работи с JWT и Refresh токени.
+    /// Отговаря за генериране, подновяване и валидиране на токени за удостоверяване.
     /// </summary>
     public class JwtHelper : IJwtHelper
     {
@@ -26,12 +27,13 @@ namespace EventManager.AppServices.Implementations
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
-        /// JwtHelper service constructor 
+        /// Конструктор, който инициализира <see cref="JwtHelper"/> 
+        /// и инжектира необходимите зависимости.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        /// <param name="userManager"></param>
-        /// <param name="httpContextAccessor"></param>
+        /// <param name="context">Базата данни за достъп до Refresh токени.</param>
+        /// <param name="configuration">Конфигурация с JwtSettings.</param>
+        /// <param name="userManager">Управление на потребителите в системата.</param>
+        /// <param name="httpContextAccessor">Достъп до текущия HTTP контекст.</param>
         public JwtHelper(
         EventManagerDbContext context,
         IConfiguration configuration,
@@ -45,10 +47,10 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Generates JWT.
+        /// Генерира нов JWT за даден потребител.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
+        /// <param name="user">Потребителят, за когото се генерира токена.</param>
+        /// <returns>Отговор с токена и информация за неговата валидност.</returns>
         public async Task<CreateJwtResponse> GenerateJwt(User user)
         {
             var roles = await _userManager.GetRolesAsync(user);
@@ -87,10 +89,10 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Creates a new Refresh Token.
+        /// Подновява Refresh токен и издава нов JWT.
         /// </summary>
-        /// <param name="req"></param>
-        /// <returns></returns>
+        /// <param name="req">Заявка, съдържаща текущия Refresh токен.</param>
+        /// <returns>Отговор със статус и нов Refresh токен.</returns>
         public async Task<RefreshTokenResponse> RenewRefreshToken(RefreshRequest req)
         {
             var response = new RefreshTokenResponse();
@@ -144,11 +146,10 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Confirm the Refresh Token is still active.
+        /// Маркира Refresh токен като невалиден (revoked).
         /// </summary>
-        /// <param name="refreshToken"></param>
-        /// <param name="revokedByIpString"></param>
-        /// <returns></returns>
+        /// <param name="refreshToken">Стойността на токена, който трябва да бъде проверен/анулиран.</param>
+        /// <param name="revokedByIpString">IP адресът, от който е извършено анулирането.</param>
         public async Task ConfirmRefreshTokenIsAlive(string? refreshToken, string revokedByIpString)
         {
             if (refreshToken != null)
@@ -163,6 +164,9 @@ namespace EventManager.AppServices.Implementations
             }
         }
 
+        /// <summary>
+        /// Генерира криптографски сигурен низ за Refresh токен.
+        /// </summary>
         private static string GenerateSecureRefreshToken()
         {
             var bytes = new byte[64];
@@ -170,6 +174,9 @@ namespace EventManager.AppServices.Implementations
             return Convert.ToBase64String(bytes);
         }
 
+        /// <summary>
+        /// Определя основната роля на потребителя (Admin или User).
+        /// </summary>
         private static string ResolveMainRole(IList<string> roles)
             => roles.Contains("Admin") ? "Admin" : "User";
     }

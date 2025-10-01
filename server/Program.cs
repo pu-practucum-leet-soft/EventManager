@@ -13,15 +13,25 @@ using System.Text;
 namespace EventManager
 {
     /// <summary>
-    /// 
+    /// Главният клас за стартиране на EventManager приложението.
+    /// Съдържа конфигурацията на услугите (DI), middleware конвейера
+    /// и стартирането на уеб сървъра.
     /// </summary>
     public class Program
     {
         /// <summary>
-        /// 
+        /// Точка за вход в приложението.
+        /// Конфигурира DI контейнера, аутентикацията (JWT + Identity),
+        /// Swagger документацията, CORS политиката, базата данни и
+        /// стартира уеб сървъра.
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
+        /// <param name="args">
+        /// Аргументи от командния ред, които ASP.NET Core може да използва
+        /// при стартиране на приложението.
+        /// </param>
+        /// <returns>
+        /// Асинхронна задача, която приключва, когато приложението бъде спряно.
+        /// </returns>
         public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);

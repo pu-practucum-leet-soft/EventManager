@@ -1,12 +1,13 @@
-namespace EventManager.AppServices.Messaging.Responses.EventResponses;
-
-/// <summary> 
-/// The response containing the number of invited participants.
-/// </summary>
-public class AddParticipantsResponse
+namespace EventManager.AppServices.Messaging.Responses.EventResponses
 {
-    /// <summary>
-    /// An integer that will contain the invited participants.
+    /// <summary> 
+    /// Отговор, съдържащ броя на поканените участници.
     /// </summary>
-    public int Added { get; set; }
+    public class AddParticipantsResponse
+    {
+        /// <summary>
+        /// Цяло число, което указва броя на поканените участници.
+        /// </summary>
+        public int Added { get; set; }
+    }
 }

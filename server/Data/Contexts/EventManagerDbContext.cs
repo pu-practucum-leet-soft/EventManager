@@ -7,33 +7,41 @@ using Microsoft.EntityFrameworkCore;
 namespace EventManager.Data.Contexts
 {
     /// <summary>
-    /// 
+    /// Главният DbContext за EventManager приложението.
+    /// Управлява достъпа до базата данни чрез Entity Framework Core
+    /// и включва интеграция с ASP.NET Core Identity за работа с потребители и роли.
     /// </summary>
     public class EventManagerDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         /// <summary>
-        /// 
+        /// Представлява таблицата с всички събития (Events).
         /// </summary>
         public DbSet<Event> Events { get; set; }
+
         /// <summary>
-        /// 
+        /// Представлява връзките между потребители и събития (участници).
         /// </summary>
         public DbSet<EventParticipant> EventParticipants { get; set; }
+
         /// <summary>
-        /// 
+        /// Представлява таблицата с refresh токени, използвани за подновяване на JWT.
         /// </summary>
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+
         /// <summary>
-        /// 
+        /// Създава нов екземпляр на <see cref="EventManagerDbContext"/> 
+        /// с предоставените опции за базата данни.
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="options">Опции за конфигурация на DbContext.</param>
         public EventManagerDbContext(DbContextOptions<EventManagerDbContext> options) : base(options)
         {
         }
+
         /// <summary>
-        /// 
+        /// Конфигурира схемата на базата данни и връзките между ентитетите.
+        /// Определя имена на таблици, ограничения, индекси и релации.
         /// </summary>
-        /// <param name="modelBuilder"></param>
+        /// <param name="modelBuilder">ModelBuilder обект за конфигурация на EF Core модела.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

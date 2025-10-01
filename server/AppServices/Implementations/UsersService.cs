@@ -13,13 +13,27 @@ using static System.Net.WebRequestMethods;
 namespace EventManager.AppServices.Implementations
 {
     /// <summary>
-    /// Initializes the user service which manages the user actions.
+    /// Инициализира инстанция на <see cref="UsersService"/>, която управлява
+    /// потребителските действия – регистрация, вход, изход и роли.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="configuration"></param>
-    /// <param name="userManager"></param>
-    /// <param name="httpContextAccessor"></param>
-    /// <param name="jwtHelper"></param>
+    /// <param name="context">
+    /// Контекстът на базата данни (<see cref="EventManagerDbContext"/>), използван за достъп и
+    /// промяна на потребители, роли и токени.
+    /// </param>
+    /// <param name="configuration">
+    /// Конфигурационен обект (<see cref="IConfiguration"/>), съдържащ настройки за JWT и други параметри.
+    /// </param>
+    /// <param name="userManager">
+    /// Сервизът (<see cref="UserManager{TUser}"/>) за управление на потребителите,
+    /// който предоставя операции като създаване, търсене и проверка на пароли.
+    /// </param>
+    /// <param name="httpContextAccessor">
+    /// Достъп до текущия HTTP контекст (<see cref="IHttpContextAccessor"/>),
+    /// използван за работа с заявки и отговори, включително бисквитки.
+    /// </param>
+    /// <param name="jwtHelper">
+    /// Помощен сервиз (<see cref="IJwtHelper"/>), отговорен за генерирането и подновяването на JWT и Refresh токени.
+    /// </param>
     public class UsersService(
         EventManagerDbContext context,
         IConfiguration configuration,
@@ -34,10 +48,10 @@ namespace EventManager.AppServices.Implementations
         private readonly IJwtHelper _jwtHelper = jwtHelper;
 
         /// <summary>
-        /// Registers a new user.
+        /// Регистрира нов потребител в системата.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="request">Заявка за създаване на потребител.</param>
+        /// <returns>Резултат от регистрацията.</returns>
         public async Task<CreateUserResponse> SaveAsync(CreateUserRequest request)
         {
             CreateUserResponse response = new();
@@ -71,10 +85,10 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Gets a user from the database and returns the view model
+        /// Връща информация за потребител по неговото Id.
         /// </summary>
-        /// <param name="id">User data</param>
-        /// <returns>UserViewModel</returns>
+        /// <param name="id">Уникален идентификатор на потребителя.</param>
+        /// <returns>Модел с името и имейла на потребителя.</returns>
         public async Task<UserViewModel?> GetUserByIdAsync(string id)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == id);
@@ -88,11 +102,11 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Gets a user from the database and returns the view model
+        /// Намира потребител по имейл и връща неговия идентификатор.
         /// </summary>
-        /// <param name="email">User information - email</param>
-        /// <returns></returns>
-        /// <exception cref="Exception">If the user is not found throws an Exception.</exception>
+        /// <param name="email">Имейл адрес на потребителя.</param>
+        /// <returns>Обект със стойност Id.</returns>
+        /// <exception cref="Exception">Хвърля се, ако потребителят не е намерен.</exception>
         public async Task<UserIdResponse> GetUserIdByEmailAsync(string email)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -103,10 +117,11 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Signs in the user.
+        /// Вписва потребител чрез имейл и парола.
+        /// При успех генерира JWT и Refresh токен.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns>LoginResponse</returns>
+        /// <param name="request">Заявка с имейл и парола.</param>
+        /// <returns>Резултат от вписването с токени и данни за потребителя.</returns>
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             var response = new LoginResponse();
@@ -154,8 +169,8 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Signs the user out.
-        /// </summary>
+        /// Изписва потребител, като анулира неговия Refresh токен.
+        /// </summary> 
         public async Task LogoutAsync()
         {
             var http = _httpContextAccessor.HttpContext!;
@@ -176,11 +191,11 @@ namespace EventManager.AppServices.Implementations
         }
 
         /// <summary>
-        /// Adds a role for the user
+        /// Назначава роля на съществуващ потребител.
         /// </summary>
-        /// <param name="userId">The user's Id</param>
-        /// <param name="roleName">The selected role</param>
-        /// <returns></returns>
+        /// <param name="userId">Идентификатор на потребителя.</param>
+        /// <param name="roleName">Име на ролята.</param>
+        /// <returns>Съобщение за резултата.</returns>
         public async Task<string> AssignRole(string userId, string roleName)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -194,6 +209,9 @@ namespace EventManager.AppServices.Implementations
                 return new StringBuilder().Append(result.Errors).ToString();
         }
 
+        /// <summary>
+        /// Генерира криптографски сигурен Refresh токен.
+        /// </summary>
         private static string GenerateSecureRefreshToken()
         {
             var bytes = new byte[64];
@@ -201,7 +219,9 @@ namespace EventManager.AppServices.Implementations
             return Convert.ToBase64String(bytes);
         }
 
-
+        /// <summary>
+        /// Определя основната роля на потребителя – Admin или User.
+        /// </summary>
         private static string ResolveMainRole(IList<string> roles)
             => roles.Contains("Admin") ? "Admin" : "User";
     }
