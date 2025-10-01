@@ -75,6 +75,31 @@ namespace EventManager.AppServices.Implementations
             {
                 await _userManager.AddToRoleAsync(user, "User");
                 response.StatusCode = BusinessStatusCodeEnum.Success;
+
+                var jwt = await _jwtHelper.GenerateJwt(user);
+
+                var refreshExpiryMins = int.Parse(_config["RefreshTokenSettings:ExpiryMinutes"]!);
+                var refresh = new RefreshToken
+                {
+                    Token = GenerateSecureRefreshToken(),
+                    UserId = user.Id,
+                    Expires = DateTime.UtcNow.AddMinutes(refreshExpiryMins),
+                    CreatedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+                };
+
+                await _context.RefreshTokens.AddAsync(refresh);
+                await _context.SaveChangesAsync();
+
+
+                var http = _httpContextAccessor.HttpContext!;
+                http.Response.Cookies.Append("refresh-token", refresh.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = refresh.Expires
+                });
+
                 return response;
             }
 
@@ -96,6 +121,7 @@ namespace EventManager.AppServices.Implementations
 
             return new UserViewModel
             {
+                Id = user.Id,
                 UserName = user.UserName!,
                 Email = user.Email!
             };
@@ -155,6 +181,17 @@ namespace EventManager.AppServices.Implementations
 
             await _context.RefreshTokens.AddAsync(refresh);
             await _context.SaveChangesAsync();
+
+
+            var http = _httpContextAccessor.HttpContext!;
+            http.Response.Cookies.Append("refresh-token", refresh.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = refresh.Expires
+            });
+
 
             return new LoginResponse
             {

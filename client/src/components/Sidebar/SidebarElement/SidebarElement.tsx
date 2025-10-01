@@ -6,21 +6,25 @@ import useCurrentRoute from "@hooks/useCurrentRoute";
 import classNames from "classnames";
 
 interface ISidebarElementProps {
-  to: string;
   icon: keyof typeof iconMap;
   label: string;
+  to?: string;
+  onClick?: () => void;
+  className?: string;
 }
 
 const SidebarElement: React.FC<ISidebarElementProps> = ({
   to,
   icon,
   label,
+  onClick,
+  className,
 }) => {
-  const isCurrentRoute = useCurrentRoute(to);
+  const isCurrentRoute = useCurrentRoute(to ?? "");
 
-  return (
+  return to ? (
     <Link
-      className={classNames(styles.SidebarElement, {
+      className={classNames(styles.SidebarElement, className, {
         [styles.Active]: isCurrentRoute,
       })}
       to={to}
@@ -28,6 +32,14 @@ const SidebarElement: React.FC<ISidebarElementProps> = ({
       <span className={styles.Label}>{label}</span>
       <Icon name={icon} className={styles.Icon} />
     </Link>
+  ) : (
+    <button
+      className={classNames(styles.SidebarElement, className)}
+      onClick={onClick}
+    >
+      <span className={styles.Label}>{label}</span>
+      <Icon name={icon} className={styles.Icon} />
+    </button>
   );
 };
 

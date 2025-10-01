@@ -46,16 +46,16 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Връща информация за събитие по неговото Id.
     /// </summary>
-    /// <param name="id">Уникален идентификатор на събитието.</param>
-    /// <returns>Събитие или NotFound ако не съществува.</returns>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id}")]
     [ProducesResponseType(typeof(EventViewModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetEventById(Guid id)
+    public async Task<IActionResult> GetEventById([FromRoute] string id)
     {
-        var res = await _service.GetEvent(new GetEventRequest { EventId = id });
+        Console.WriteLine(id);
+        if (!Guid.TryParse(id, out var eventId)) return BadRequest("Invalid event ID.");
+        var res = await _service.GetEventById(eventId);
         if (res == null) return NotFound();
         return Ok(res);
     }
@@ -63,17 +63,44 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Редактира съществуващо събитие.
     /// </summary>
-    /// <param name="eventId">Уникален идентификатор на събитието.</param>
-    /// <param name="req">Данни за промяна.</param>
-    /// <returns>Резултат от операцията по редакция.</returns>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{eventId}")]
     [Authorize]
     [ProducesResponseType(typeof(EditEventResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Edit([FromRoute] Guid eventId, [FromBody] EditEventRequest req)
+    public async Task<IActionResult> Edit([FromRoute] string eventId, [FromBody] EditEventRequest req)
     {
-        var res = await _service.EditEvent(eventId, req);
+        Console.WriteLine(eventId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+        if (!Guid.TryParse(userId, out var userGuid))
+        {
+            return Unauthorized();
+        }
+        if (!Guid.TryParse(eventId, out var eventIdGuid)) return BadRequest("Invalid event ID.");
+
+        var res = await _service.EditEvent(eventIdGuid, userGuid, req);
+        return Ok(res);
+    }
+
+    /// <summary>
+    /// Cancel existing event.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(CancelEventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+        if(!Guid.TryParse(userId, out var userGuid))
+        {
+            return Unauthorized();
+        }
+
+        var res = await _service.CancelEvent(id, userGuid);
         return Ok(res);
     }
 
@@ -94,7 +121,7 @@ public class EventsController : ControllerBase
         var inviterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var res = await _service.AddParticipants(req, inviterId!);
         return Ok(res);
-    }
+    }    
 
     /// <summary>
     /// Връща списък с всички събития в системата.
@@ -123,6 +150,18 @@ public class EventsController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var res = await _service.GetEventStatistic(userId);
+        return Ok(res);
+    }
+
+    /// <summary>
+    /// Връща списък с филтрирани събития (Events).
+    /// </summary>
+    [HttpGet("filter")]
+    [ProducesResponseType(typeof(IEnumerable<GetAllEventsResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)] 
+    public async Task<IActionResult> GetEventsWithFilters([FromQuery] GetEventsWithFiltersRequest req)
+    {
+        var res = await _service.GetEventsWithFilters(req);
         return Ok(res);
     }
 }

@@ -6,7 +6,14 @@
 
   background-color: $color-background-2;
 
-  .InviteList {
+  .InvitesSections {
     height: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    .InviteList {
+      width: 100%;
+      height: 100%;
+    }
   }
 }

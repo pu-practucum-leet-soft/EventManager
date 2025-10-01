@@ -91,7 +91,14 @@ namespace EventManager
                 .AddEntityFrameworkStores<EventManagerDbContext>()
                 .AddDefaultTokenProviders();
 
-            builder.Services.AddControllers();
+            builder.Services
+            .AddControllers()
+            // to prevent circular reference issues
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                options.JsonSerializerOptions.WriteIndented = true;
+             });
             builder.Services.AddEndpointsApiExplorer();
 
 
@@ -134,6 +141,8 @@ namespace EventManager
 
             builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddScoped<IHomeService, HomeService>();
+            builder.Services.AddScoped<IInvitesService, InvitesService>();
             builder.Services.AddScoped<IJwtHelper, JwtHelper>();
 
             builder.Services.AddHttpContextAccessor();
@@ -145,7 +154,7 @@ namespace EventManager
                 options.AddPolicy(name: ClientAppPolicy,
                       builder =>
                       {
-                          builder.WithOrigins("http://localhost:5173") // TODO: extract frontend URL to config file or environment variable
+                          builder.WithOrigins("https://localhost:5173") // TODO: extract frontend URL to config file or environment variable
                                  .AllowAnyHeader()
                                  .AllowAnyMethod()
                                  .AllowCredentials();
@@ -165,9 +174,10 @@ namespace EventManager
                 app.UseHsts();
             }
 
+            app.UseCors(ClientAppPolicy);
             app.UseHttpsRedirection();
 
-            app.UseCors(ClientAppPolicy);
+
 
             app.UseAuthentication();
             app.UseAuthorization();

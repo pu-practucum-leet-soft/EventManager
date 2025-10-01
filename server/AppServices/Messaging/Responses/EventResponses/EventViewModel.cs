@@ -50,5 +50,5 @@ public class EventViewModel
     /// <summary>
     /// Списък с участниците в събитието.
     /// </summary>
-    public ICollection<EventParticipant> Participants { get; set; } = new List<EventParticipant>();
+    public ICollection<EventParticipant>? Participants { get; set; }
 }

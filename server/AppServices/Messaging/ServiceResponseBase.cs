@@ -13,6 +13,11 @@
         public BusinessStatusCodeEnum StatusCode { get; set; }
 
         /// <summary>
+        /// Съобщение съдържащо повече информация за извършената операция и статуса ѝ.
+        /// </summary>
+        public string? Message { get; set; }
+
+        /// <summary>
         /// Създава нов екземпляр на <see cref="ServiceResponseBase"/> 
         /// със стойност по подразбиране <see cref="BusinessStatusCodeEnum.None"/>.
         /// </summary>

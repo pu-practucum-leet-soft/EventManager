@@ -3,26 +3,19 @@ import styles from "./EventCard.module.scss";
 import Button from "@components/UI/Button";
 
 export interface IEventCardProps {
+  id: string;
   title: string;
   location: string;
   startDate: string;
-  endDate: string;
 }
 
-const EventCard = ({
-  title,
-  location,
-  startDate,
-  endDate,
-}: IEventCardProps) => {
+const EventCard = ({ id, title, location, startDate }: IEventCardProps) => {
   return (
     <div className={styles.EventCard}>
       <span className={styles.Title}>{title}</span>
       <span>{location}</span>
-      <span>
-        {startDate} - {endDate}
-      </span>
-      <Link to={`/events/${title}`}>
+      <span>{new Date(startDate).toLocaleDateString()}</span>
+      <Link to={`/events/${id}`}>
         <Button
           className={styles.ViewButton}
           inline

@@ -1,5 +1,6 @@
 namespace EventManager.AppServices.Interfaces;
 
+using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
 
@@ -53,4 +54,7 @@ public interface IEventService
     /// <param name="ownerId">Идентификатор на собственика на събитията.</param>
     /// <returns>Статистически данни за събитията на собственика.</returns>
     Task<StatisticViewModel> GetEventStatistic(Guid ownerId);
+    Task<GetByIdResponse> GetEventById(Guid id);
+    
+    Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req);
 }

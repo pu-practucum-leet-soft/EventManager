@@ -9,17 +9,26 @@ export interface IStatCardProps {
   title: string;
   location: string;
   startDate: string;
-  endDate: string;
+  participantsCount: {
+    accepted: number;
+    declined: number;
+    pending: number;
+  };
 }
 
-const StatCard = ({ title, location, startDate, endDate }: IStatCardProps) => {
+const StatCard = ({
+  title,
+  location,
+  startDate,
+  participantsCount,
+}: IStatCardProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const data = [
     ["Participants", "Status"],
-    ["Pending", 11],
-    ["Accepted", 13],
-    ["Declined", 7],
+    ["Pending", participantsCount.pending ?? 0],
+    ["Accepted", participantsCount.accepted ?? 0],
+    ["Declined", participantsCount.declined ?? 0],
   ];
 
   const options = {
@@ -39,9 +48,7 @@ const StatCard = ({ title, location, startDate, endDate }: IStatCardProps) => {
       <button className={styles.Header} onClick={handleClick}>
         <span className={styles.Title}>{title}</span>
         <span>{location}</span>
-        <span>
-          {startDate} - {endDate}
-        </span>
+        <span>{new Date(startDate).toLocaleDateString()}</span>
         <Icon name="arrow-down" className={styles.Icon} />
       </button>
       <SlideToggle isOpen={isDetailsOpen} duration={300}>
@@ -53,6 +60,12 @@ const StatCard = ({ title, location, startDate, endDate }: IStatCardProps) => {
             width={"600px"}
             height={"500px"}
           />
+          <div className={styles.Summary}>
+            <h3>Event Summary</h3>
+            <p>Accepted: {participantsCount.accepted}</p>
+            <p>Declined: {participantsCount.declined}</p>
+            <p>Pending: {participantsCount.pending}</p>
+          </div>
         </div>
       </SlideToggle>
     </div>

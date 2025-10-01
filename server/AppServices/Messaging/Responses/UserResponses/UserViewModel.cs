@@ -7,6 +7,10 @@
     public class UserViewModel
     {
         /// <summary>
+        /// Уникален идентификатор на потребител, към което се добавят участници.
+        /// </summary>
+        public Guid? Id { get; set; }
+        /// <summary>
         /// Потребителско име на потребителя.
         /// </summary>
         public string? UserName { get; set; }

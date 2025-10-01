@@ -36,7 +36,7 @@
         /// </summary>
         /// <param name="model">Модел с данни за създаване на нов потребител.</param>
         /// <returns>Информация за резултата от създаването.</returns>
-        [HttpPost]
+        [HttpPost("register")]
         [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ServiceResponseError), StatusCodes.Status500InternalServerError)]

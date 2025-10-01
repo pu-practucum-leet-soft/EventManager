@@ -1,5 +1,5 @@
 const config = {
-  apiBaseUrl: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  apiBaseUrl: import.meta.env.VITE_API_URL || "https://localhost:7280/api",
   routes: {
     home: "/",
     events: "/events",

@@ -39,6 +39,10 @@
         /// <summary>
         /// Подадената заявка е невалидна или непълна.
         /// </summary>
-        BadRequest
+        BadRequest,
+        /// <summary>
+        /// 
+        /// </summary>
+        Forbidden
     }
 }
