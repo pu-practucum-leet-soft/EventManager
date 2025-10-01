@@ -1,4 +1,6 @@
+using System.Reflection.Metadata.Ecma335;
 using EventManager.AppServices.Interfaces;
+using EventManager.AppServices.Messaging;
 using EventManager.AppServices.Messaging.Requests.EventRequests;
 using EventManager.AppServices.Messaging.Responses.EventResponses;
 using EventManager.AppServices.Messaging.Responses.UserResponses;
@@ -60,7 +62,8 @@ public class EventService : IEventService
             };
 
             await _db.Events.AddAsync(ev);
-            await _db.EventParticipants.AddAsync(new EventParticipant { EventId = ev.Id, InviteeId = ownerId });
+            // owner auto-joins
+            await _db.EventParticipants.AddAsync(new EventParticipant { EventId = ev.Id, InviteeId = ownerId, InviterId = ownerId, Status = InviteStatus.Accepted });
 
             await _db.SaveChangesAsync();
 
@@ -98,6 +101,7 @@ public class EventService : IEventService
             var participantIds = ev.Participants.ToList();
             var owner = new UserViewModel
             {
+                Id = ev.OwnerUserId,
                 UserName = ev.OwnerUser.UserName,
                 Email = ev.OwnerUser.Email,
             };
@@ -120,33 +124,123 @@ public class EventService : IEventService
         }
     }
 
+    public async Task<GetByIdResponse> GetEventById(Guid id)
+    {
+        var res = new GetByIdResponse();
+
+        var ev = await _db.Events
+            .AsNoTracking()
+            .Include(e => e.Participants)
+            .ThenInclude(p => p.Invitee)
+            .Include(e => e.OwnerUser)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (ev == null)
+        {
+            res.StatusCode = Messaging.BusinessStatusCodeEnum.NotFound;
+            return res;
+        }
+
+        var participants = ev.Participants
+            .Where(p => p.Status == InviteStatus.Accepted)
+            .ToList();
+        var owner = new UserViewModel
+        {
+            UserName = ev.OwnerUser.UserName,
+            Email = ev.OwnerUser.Email,
+        };
+
+        res.Event = new EventViewModel
+        {
+            Id = ev.Id,
+            Title = ev.Title,
+            Description = ev.Description,
+            StartDate = ev.StartDate,
+            Location = ev.Location,
+            OwnerUserId = ev.OwnerUserId,
+            Participants = participants,
+            Status = ev.Status
+        };
+
+        return res;
+     }
+
     /// <summary>
     /// Provides access to an event and changes the contents of the event data.
     /// </summary>
     /// <param name="eventId"> </param> 
+    /// <param name="userId"> </param> 
     /// <param name="req">
     /// Conains the event data to be passed to the database entity.
     /// </param> 
     /// <returns>EditEventResponse returns a message signifying the completion of the request.</returns>
     /// <response code="200">Returns the requested project board.</response>
     /// <response code="404">If the project board is not found.</response>
-    public async Task<EditEventResponse> EditEvent(Guid eventId, EditEventRequest req)
+    public async Task<EditEventResponse> EditEvent(Guid eventId, Guid userId, EditEventRequest req)
     {
+        Console.WriteLine($"Editing event {eventId} by user {userId}");
         var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (ev == null) throw new KeyNotFoundException("Event not found");
 
-        if (ev.OwnerUserId != req.ActorUserId) throw new UnauthorizedAccessException("Only owner can edit");
+        if (ev.OwnerUserId != userId) throw new UnauthorizedAccessException("Only owner can edit");
 
+        Console.WriteLine($"Before Edit: Title={ev.Title}, Location={ev.Location}, Description={ev.Description}, StartDate={ev.StartDate}");
+        Console.WriteLine($"Edit Request: Title={req.Title}, Location={req.Location}, Description={req.Description}, StartDate={req.StartDate}");
         if (req.Title is not null) ev.Title = req.Title;
         if (req.Location is not null) ev.Location = req.Location;
         if (req.Description is not null) ev.Description = req.Description;
         // the state of the properties below will be checked and ensured to have values in the FE
         ev.StartDate = req.StartDate;
-        ev.Status = req.Status;
 
         await _db.SaveChangesAsync();
         return new EditEventResponse { Success = true };
+    }
+
+    /// <summary>
+    /// Cancels an event by changing its status to "Cancelled".
+    /// </summary>
+    /// <param name="eventId">
+    /// The Id of the event to be canceled.
+    /// </param> 
+    /// <param name="userId">
+    /// The Id of the user who is trying to cancel the event.
+    /// </param>
+    /// <returns>The response contains the status of the request and a message to track the process.</returns>
+    /// <response code="200">Returns the requested project board.</response>
+    /// <response code="404">If the project board is not found.</response>
+    /// <response code="403">If the user is not the owner of the event.</response>
+    /// <response code="400">If the event is already canceled.</response>   
+    public async Task<CancelEventResponse> CancelEvent(Guid eventId, Guid userId)
+    {
+        var res = new CancelEventResponse();
+
+        var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+        if (ev == null)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.NotFound;
+            return res;
+        }
+
+        if (ev.OwnerUserId != userId)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.Forbidden;
+            return res;
+        }
+
+        if (ev.Status == EventStatus.Cancelled)
+        {
+            res.StatusCode = BusinessStatusCodeEnum.BadRequest;
+            res.Message = "Event is already canceled.";
+            return res;
+        }
+
+        ev.Status = EventStatus.Cancelled;
+        await _db.SaveChangesAsync();
+
+        res.StatusCode = BusinessStatusCodeEnum.Success;
+        res.Message = "Event canceled successfully.";
+        return res;
     }
 
     /// <summary>
@@ -293,5 +387,45 @@ public class EventService : IEventService
         }
 
         return res;
+    }
+
+    public async Task<GetAllEventsResponse> GetEventsWithFilters(GetEventsWithFiltersRequest req)
+    {
+        var response = new GetAllEventsResponse();
+
+        var query = _db.Events.AsQueryable();
+
+        if (!string.IsNullOrEmpty(req.Title))
+        {
+            query = query.Where(e => e.Title!.Contains(req.Title));
+        }
+
+        if (req.StartDate.HasValue)
+        {
+            query = query.Where(e => e.StartDate >= req.StartDate.Value.Date);
+        }
+
+        if (!string.IsNullOrEmpty(req.Location))
+        {
+            query = query.Where(e => e.Location!.Contains(req.Location));
+        }
+
+        var filteredEvents = await query.AsNoTracking().ToListAsync();
+
+        var eventSummaries = filteredEvents.Select(e => new EventSummary
+        {
+            Id = e.Id,
+            Title = e.Title!,
+            Description = e.Description,
+            StartDate = e.StartDate,
+            OwnerUserId = e.OwnerUserId,
+            Status = e.Status,
+            Location = e.Location,
+            Participants = e.Participants
+        }).ToList();
+
+        response.Events = eventSummaries;
+
+        return response;
     }
 }

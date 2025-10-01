@@ -28,7 +28,22 @@
   }
 
   .Details {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 1em;
     border-right: 1px solid $color-background-2;
     border-left: 1px solid $color-background-2;
+
+    .Summary {
+      flex: 1;
+      h3 {
+        margin-top: 0;
+      }
+      p {
+        margin: 0.2em 0;
+      }
+    }
   }
 }

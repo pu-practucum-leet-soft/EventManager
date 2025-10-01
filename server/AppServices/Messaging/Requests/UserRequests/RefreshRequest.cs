@@ -5,9 +5,6 @@
     /// </summary>
     public sealed class RefreshRequest
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        public string RefreshToken { get; set; } = default!;
+        // public string RefreshToken { get; set; } = default!;
     }
 }

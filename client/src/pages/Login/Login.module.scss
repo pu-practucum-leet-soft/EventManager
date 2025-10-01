@@ -48,7 +48,7 @@
         .RegisterButton {
           padding: 0;
           &:hover {
-            color: darken($color-primary, 10%);
+            color: color.adjust($color-primary, $lightness: -10%);
           }
         }
       }

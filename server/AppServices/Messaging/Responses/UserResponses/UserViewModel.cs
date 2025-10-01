@@ -5,6 +5,9 @@
     /// </summary>
     public class UserViewModel
     {
+        /// <summary> 
+        /// </summary>
+        public Guid? Id { get; set; }   
         /// <summary>
         /// 
         /// </summary>
@@ -12,6 +15,7 @@
         /// <summary>
         /// 
         /// </summary>
-        public string? Email { get; set; }          
+        public string? Email { get; set; }       
+
     }
 }

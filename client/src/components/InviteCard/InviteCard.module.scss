@@ -9,6 +9,23 @@
     flex-grow: 1;
   }
 
+  .Status {
+    border-radius: 8px;
+
+    &.Accepted {
+      background-color: rgba($color-success, 0.2);
+      color: $color-success;
+    }
+    &.Declined {
+      background-color: rgba($color-danger, 0.2);
+      color: $color-danger;
+    }
+    &.Pending {
+      background-color: rgba($color-warning, 0.2);
+      color: $color-warning;
+    }
+  }
+
   span {
     padding: 0.5em;
   }

@@ -40,10 +40,11 @@ public class EventViewModel
     /// 
     /// </summary>
     public EventStatus Status { get; set; }
+
     /// <summary>
     /// 
     /// </summary>
-    public ICollection<EventParticipant> Participants { get; set; } = new List<EventParticipant>();
+    public ICollection<EventParticipant>? Participants { get; set; }
 }
 
 

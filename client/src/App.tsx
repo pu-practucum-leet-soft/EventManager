@@ -8,11 +8,19 @@ import StatsPage from "@pages/Stats";
 import ProfilePage from "@pages/Profile";
 import LoginPage from "@pages/Login/Login";
 import RegisterPage from "@pages/Register/Register";
+import ProtectedRoute from "@components/Auth/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<HomePage />} />
         <Route path="events" element={<EventsPage />} />
         <Route path="invites" element={<InvitesPage />} />

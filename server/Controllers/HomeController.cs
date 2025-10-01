@@ -1,5 +1,9 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using EventManager.AppServices.Interfaces;
+using EventManager.AppServices.Messaging.Responses.HomeResponses;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EventManager.Controllers
 {
@@ -10,14 +14,16 @@ namespace EventManager.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
+        private readonly IHomeService _service;
         private readonly ILogger<HomeController> _logger;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="logger"></param>
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IHomeService service, ILogger<HomeController> logger)
         {
+            _service = service;
             _logger = logger;
         }
         /// <summary>
@@ -25,9 +31,12 @@ namespace EventManager.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [Authorize]
         public IActionResult Index()
         {
-            return Ok("Welcome to the Event Manager API");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var me)) return Unauthorized();
+            return _service.GetHome(me).Result is GetHomeResponse res ? Ok(res) : NotFound();
         }
     }
 }

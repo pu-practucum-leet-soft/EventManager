@@ -9,6 +9,9 @@
         /// 
         /// </summary>
         public BusinessStatusCodeEnum StatusCode { get; set; }
+
+        public string? Message { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
